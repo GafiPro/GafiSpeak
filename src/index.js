@@ -3,6 +3,7 @@ import {
   Client,
   Events,
   GatewayIntentBits,
+  MessageFlags,
   PermissionFlagsBits
 } from "discord.js";
 import {
@@ -41,7 +42,7 @@ function closeSession(guildId) {
 }
 
 async function handleJoin(interaction) {
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   try {
     const member = await interaction.guild.members.fetch(interaction.user.id);
@@ -130,13 +131,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
   if (interaction.user.id !== config.ownerId) {
     await interaction.reply({
       content: "These commands are restricted to the bot owner.",
-      ephemeral: true
+      flags: MessageFlags.Ephemeral
     });
     return;
   }
 
   if (!interaction.inGuild()) {
-    await interaction.reply({ content: "Use this command in a server.", ephemeral: true });
+    await interaction.reply({ content: "Use this command in a server.", flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -150,7 +151,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       const session = sessions.get(interaction.guildId);
 
       if (!session) {
-        await interaction.reply({ content: "Use /join first.", ephemeral: true });
+        await interaction.reply({ content: "Use /join first.", flags: MessageFlags.Ephemeral });
         return;
       }
 
@@ -160,7 +161,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       await interaction.reply({
         content: "Volume set to " + percent + "%.",
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
       return;
     }
@@ -170,13 +171,13 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       await interaction.reply({
         content: left ? "Left the voice channel and cleared the speech queue." : "I'm not in a voice channel.",
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
   } catch (error) {
     console.error("[GafiSpeak] Command failed:", error);
 
-    const response = { content: "The command failed. Check the bot console for details.", ephemeral: true };
+    const response = { content: "The command failed. Check the bot console for details.", flags: MessageFlags.Ephemeral };
 
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply(response.content).catch(() => {});
@@ -194,11 +195,22 @@ client.on(Events.MessageCreate, (message) => {
   if (!session || session.connection.state.status !== VoiceConnectionStatus.Ready) return;
 
   const speechText = toSpeechText(message.content);
-  if (!speechText || !isEnglish(speechText)) return;
+  if (!speechText) return;
+
+  if (!isEnglish(speechText)) {
+    console.log("[GafiSpeak] Ignored a message because it did not pass the English-language filter.");
+    return;
+  }
 
   if (!session.queue.enqueue(speechText)) {
     console.warn("[GafiSpeak] Speech queue is full; a new message was skipped.");
+    return;
   }
+
+  console.log(
+    "[GafiSpeak] Queued an English message (" + speechText.length +
+    " characters; " + session.queue.items.length + " waiting)."
+  );
 });
 
 client.on(Events.Error, (error) => {

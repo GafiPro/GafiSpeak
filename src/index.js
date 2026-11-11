@@ -113,7 +113,7 @@ async function handleJoin(interaction) {
     }
 
     await interaction.editReply(
-      "Joined " + channel.name + ". I'll read your English messages aloud in this server while I'm connected."
+      "Joined " + channel.name + ". I'll read your messages aloud in this server while I'm connected."
     );
   } catch (error) {
     console.error("[GafiSpeak] Join failed:", error);
@@ -203,7 +203,7 @@ client.on(Events.MessageCreate, (message) => {
   }
 
   console.log(
-    "[GafiSpeak] Queued an English message (" + speechText.length +
+    "[GafiSpeak] Queued a message (" + speechText.length +
     " characters; " + session.queue.items.length + " waiting)."
   );
 });

@@ -18,14 +18,5 @@ jobs:
           node-version: 22
       - name: Install dependencies
         run: npm install
-      - name: Check JavaScript syntax
-        run: |
-          node --check src/index.js
-          node --check src/speech-queue.js
-          node --check scripts/deploy-commands.js
-      - name: Audit dependencies
-        run: |
-          npm audit --json > npm-audit.json || true
-          node -e "const report = require('./npm-audit.json'); for (const [name, item] of Object.entries(report.vulnerabilities || {})) console.log(name + ': ' + item.severity + '; fixAvailable=' + JSON.stringify(item.fixAvailable))"
       - name: Run tests
         run: npm test

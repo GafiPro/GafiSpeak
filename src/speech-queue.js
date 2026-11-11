@@ -2,8 +2,13 @@ import { randomUUID } from "node:crypto";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import ffmpegPath from "ffmpeg-static";
 import { AudioPlayerStatus, createAudioResource } from "@discordjs/voice";
 import { EdgeTTS } from "node-edge-tts";
+
+if (ffmpegPath) {
+  process.env.FFMPEG_PATH ??= ffmpegPath;
+}
 
 const tts = new EdgeTTS({
   voice: "en-US-GuyNeural",

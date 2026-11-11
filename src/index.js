@@ -14,7 +14,7 @@ import {
 } from "@discordjs/voice";
 import { config } from "./config.js";
 import { SpeechQueue } from "./speech-queue.js";
-import { isEnglish, toSpeechText } from "./text.js";
+import { toSpeechText } from "./text.js";
 
 const client = new Client({
   intents: [
@@ -196,11 +196,6 @@ client.on(Events.MessageCreate, (message) => {
 
   const speechText = toSpeechText(message.content);
   if (!speechText) return;
-
-  if (!isEnglish(speechText)) {
-    console.log("[GafiSpeak] Ignored a message because it did not pass the English-language filter.");
-    return;
-  }
 
   if (!session.queue.enqueue(speechText)) {
     console.warn("[GafiSpeak] Speech queue is full; a new message was skipped.");

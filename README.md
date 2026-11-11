@@ -1,11 +1,11 @@
 # GafiSpeak
 
-GafiSpeak is a Discord voice bot that reads the owner's English text messages aloud in the voice channel the bot has joined.
+GafiSpeak is a Discord voice bot that reads all text messages written by its configured owner aloud in the voice channel the bot has joined, regardless of language.
 
 ## Features
 
 - Reads messages written by one configured Discord user, across guild text channels the bot can access.
-- Speaks English messages only, using one fixed male English voice (Microsoft Edge TTS: `en-US-GuyNeural`).
+- Reads messages in any language, using one fixed male English voice (Microsoft Edge TTS: `en-US-GuyNeural`).
 - Queues messages and plays them in order, without interrupting the current message.
 - Slash commands: `/join`, `/volume`, and `/leave`.
 - The queue is cleared when the bot leaves the voice channel.
@@ -58,7 +58,7 @@ GafiSpeak is a Discord voice bot that reads the owner's English text messages al
 
 - GafiSpeak only queues messages while it is connected to a voice channel.
 - Messages from anyone except `OWNER_ID`, bot messages, webhooks, and direct messages are ignored.
-- Language detection is best-effort. Very short messages are accepted only when their words match a small English-word allowlist; longer messages are checked with `franc-min`. Ambiguous or non-English messages are ignored.
+- No language filter is applied: Portuguese, English, slang, abbreviations, and short messages are all sent to the same English TTS voice.
 - URLs and raw Discord mention IDs are removed from spoken text. Markdown and custom emoji markup are simplified.
 - A bounded queue prevents unlimited memory usage. If it is full, new messages are skipped and a warning is written to the bot console.
 - Text-to-speech uses Microsoft Edge's online TTS service through `node-edge-tts`; an internet connection is required. This is not an official Microsoft cloud API and its availability can change.

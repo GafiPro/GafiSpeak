@@ -49,9 +49,7 @@ GafiSpeak is a Discord voice bot that reads all text messages written by its con
    .\.venv\Scripts\python.exe -m pip install -r requirements-tts.txt
    ```
 
-5. On Windows, install eSpeak NG for English out-of-vocabulary pronunciation fallback and other language support. Download the x64 MSI from the official [eSpeak NG releases](https://github.com/espeak-ng/espeak-ng/releases), install it, then restart PowerShell.
-
-6. Copy `.env.example` to `.env` and fill in:
+5. Copy `.env.example` to `.env` and fill in:
 
    - `DISCORD_TOKEN`: the bot token.
    - `CLIENT_ID`: the Discord application ID.

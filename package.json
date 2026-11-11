@@ -19,5 +19,8 @@
     "ffmpeg-static": "^5.2.0",
     "kokoro-js": "^1.2.1",
     "opusscript": "^0.0.7"
+  },
+  "overrides": {
+    "sharp": "^0.35.3"
   }
 }

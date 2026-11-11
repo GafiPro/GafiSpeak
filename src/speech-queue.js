@@ -4,88 +4,67 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import ffmpegPath from "ffmpeg-static";
 import { AudioPlayerStatus, createAudioResource } from "@discordjs/voice";
-import { EdgeTTS } from "node-edge-tts";
+import { KokoroTTS } from "kokoro-js";
 
 if (ffmpegPath) {
   process.env.FFMPEG_PATH ??= ffmpegPath;
 }
 
-const tts = new EdgeTTS({
-  voice: "en-US-GuyNeural",
-  lang: "en-US",
-  outputFormat: "audio-24khz-48kbitrate-mono-mp3",
-  timeout: 20000
-});
+const MODEL_ID = "onnx-community/Kokoro-82M-v1.0-ONNX";
+const VOICE = "am_fenrir";
 
-// Edge's unofficial TTS endpoint can temporarily rate-limit bursts of requests.
-// Keep one shared lane for all guilds, with a gap between each synthesis request.
-const MIN_REQUEST_INTERVAL_MS = 5000;
-const RETRY_DELAYS_MS = [20000, 60000];
-const FINAL_429_COOLDOWN_MS = 60000;
+// Load the open-weight model once and keep it in memory for all guild queues.
+// The first run downloads the model and voice assets; later runs use the local cache.
+let kokoroPromise = null;
 
-let ttsLane = Promise.resolve();
-let nextRequestAt = 0;
-let blockedUntil = 0;
+async function getKokoro() {
+  if (!kokoroPromise) {
+    console.log("[GafiSpeak] Loading the local Kokoro model. The first run downloads its files.");
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    kokoroPromise = KokoroTTS.from_pretrained(MODEL_ID, {
+      dtype: "q8",
+      device: "cpu"
+    }).then((tts) => {
+      console.log("[GafiSpeak] Kokoro is ready (voice: " + VOICE + ").");
+      return tts;
+    }).catch((error) => {
+      kokoroPromise = null;
+      throw error;
+    });
+  }
 
-function isRateLimitError(error) {
-  const message = error instanceof Error ? error.message : String(error);
-  return /(?:HTTP\s*)?429|Too Many Requests/i.test(message);
+  return kokoroPromise;
 }
 
+// Run only one local inference at a time so separate guild queues do not
+// overload the same CPU/model instance. This is serialization, not a cooldown.
+let generationLane = Promise.resolve();
+
 async function generateSpeech(text, filePath, isCurrent) {
-  // Serialise TTS requests across guilds; separate guild queues must not create a burst.
-  const previous = ttsLane;
+  const previous = generationLane;
   let release;
-  ttsLane = new Promise((resolve) => {
+  generationLane = new Promise((resolve) => {
     release = resolve;
   });
 
   await previous;
 
   try {
-    for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt += 1) {
-      if (!isCurrent()) return false;
+    if (!isCurrent()) return false;
 
-      const waitUntil = Math.max(nextRequestAt, blockedUntil);
-      const waitMs = Math.max(0, waitUntil - Date.now());
+    const tts = await getKokoro();
+    if (!isCurrent()) return false;
 
-      if (waitMs > 0) {
-        console.log("[GafiSpeak] TTS pacing: waiting " + Math.ceil(waitMs / 1000) + "s before the next request.");
-        await sleep(waitMs);
-      }
+    console.log("[GafiSpeak] Generating speech with Kokoro.");
+    const audio = await tts.generate(text, {
+      voice: VOICE,
+      speed: 1
+    });
 
-      if (!isCurrent()) return false;
+    if (!isCurrent()) return false;
 
-      nextRequestAt = Date.now() + MIN_REQUEST_INTERVAL_MS;
-
-      try {
-        console.log("[GafiSpeak] Generating speech audio.");
-        await tts.ttsPromise(text, filePath);
-        return true;
-      } catch (error) {
-        if (!isRateLimitError(error)) throw error;
-
-        if (attempt >= RETRY_DELAYS_MS.length) {
-          blockedUntil = Date.now() + FINAL_429_COOLDOWN_MS;
-          console.error(
-            "[GafiSpeak] The TTS service is still rate-limiting requests (HTTP 429). " +
-            "This message could not be generated; the next request will wait at least 60s."
-          );
-          throw error;
-        }
-
-        const retryDelay = RETRY_DELAYS_MS[attempt];
-        blockedUntil = Date.now() + retryDelay;
-        console.warn(
-          "[GafiSpeak] TTS rate limit (HTTP 429). Retrying this message in " +
-          Math.ceil(retryDelay / 1000) + "s (" + (attempt + 1) + "/" + RETRY_DELAYS_MS.length + ")."
-        );
-      }
-    }
-
-    return false;
+    await audio.save(filePath);
+    return true;
   } finally {
     release();
   }
@@ -137,7 +116,7 @@ export class SpeechQueue {
       while (this.items.length > 0) {
         const text = this.items.shift();
         const jobGeneration = this.generation;
-        const filePath = path.join(tmpdir(), "gafispeak-" + randomUUID() + ".mp3");
+        const filePath = path.join(tmpdir(), "gafispeak-" + randomUUID() + ".wav");
 
         try {
           const generated = await generateSpeech(

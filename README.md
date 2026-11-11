@@ -5,7 +5,8 @@ GafiSpeak is a Discord voice bot that reads all text messages written by its con
 ## Features
 
 - Reads messages written by one configured Discord user, across guild text channels the bot can access.
-- Reads messages in any language, using one fixed male English voice (Microsoft Edge TTS: `en-US-GuyNeural`).
+- Uses the local Kokoro-82M text-to-speech model with one fixed American male voice (`am_fenrir`).
+- Runs speech generation locally on the bot's computer; no paid TTS API or provider request limits.
 - Queues messages and plays them in order, without interrupting the current message.
 - Slash commands: `/join`, `/volume`, and `/leave`.
 - The queue is cleared when the bot leaves the voice channel.
@@ -13,6 +14,8 @@ GafiSpeak is a Discord voice bot that reads all text messages written by its con
 ## Requirements
 
 - Node.js 22.12.0 or newer.
+- An internet connection on the first run so Kokoro can download its model and voice files. The files are cached locally for later runs.
+- Enough CPU and memory to run local text-to-speech. Generation speed depends on the computer.
 - A Discord application and bot account.
 - The bot invited with the `bot` and `applications.commands` scopes and permissions to view text channels, connect to voice channels, and speak.
 - The **Message Content Intent** enabled in the Discord Developer Portal.
@@ -46,6 +49,8 @@ GafiSpeak is a Discord voice bot that reads all text messages written by its con
    npm start
    ```
 
+The first start that generates speech downloads the Kokoro model and voice files. This may take a little while. The files are cached, so they are not downloaded on every restart.
+
 ## Commands
 
 | Command | Description |
@@ -58,10 +63,10 @@ GafiSpeak is a Discord voice bot that reads all text messages written by its con
 
 - GafiSpeak only queues messages while it is connected to a voice channel.
 - Messages from anyone except `OWNER_ID`, bot messages, webhooks, and direct messages are ignored.
-- No language filter is applied: Portuguese, English, slang, abbreviations, and short messages are all sent to the same English TTS voice.
+- No language filter is applied: Portuguese, English, slang, abbreviations, and short messages are all sent to the same English voice. Non-English pronunciation may not sound natural.
 - URLs and raw Discord mention IDs are removed from spoken text. Markdown and custom emoji markup are simplified.
 - A bounded queue prevents unlimited memory usage. If it is full, new messages are skipped and a warning is written to the bot console.
-- Text-to-speech uses Microsoft Edge's online TTS service through `node-edge-tts`; an internet connection is required. This is not an official Microsoft cloud API and its availability can change.
+- Kokoro generates audio locally. There are no hosted TTS request limits or per-character API charges, but the speed of generation depends on the computer. The current Node.js setup uses CPU inference.
 
 ## Development
 
@@ -73,4 +78,4 @@ npm test
 
 ## Privacy
 
-The bot reads message content that Discord delivers to it in servers where it has access. Configure `OWNER_ID` carefully and grant only the Discord permissions it needs. It does not store message history; generated audio is written to a temporary directory and deleted after playback.
+The bot reads message content that Discord delivers to it in servers where it has access. Configure `OWNER_ID` carefully and grant only the Discord permissions it needs. It does not store message history; generated audio is written to a temporary directory and deleted after playback. The Kokoro model and voice files are cached locally by the inference library.

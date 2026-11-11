@@ -3,13 +3,40 @@ import assert from "node:assert/strict";
 import { isEnglish, toSpeechText } from "../src/text.js";
 
 test("accepts common short English chat messages", () => {
-  for (const message of ["hi", "gg", "lmao", "what's up", "lets play", "brb", "I'm ready", "don't worry", "that's crazy", "nice shot"]) {
+  for (const message of [
+    "hi", "gg", "lmao", "what's up", "lets play", "brb",
+    "I'm ready", "don't worry", "that's crazy", "nice shot"
+  ]) {
+    assert.equal(isEnglish(message), true, message);
+  }
+});
+
+test("accepts common gaming and internet slang", () => {
+  for (const message of [
+    "ngl that was crazy",
+    "bro you're cracked",
+    "frfr",
+    "you're actually cooked",
+    "skill issue",
+    "that's cap",
+    "no cap",
+    "wyd rn",
+    "ggs wp",
+    "my bad",
+    "that's so sus",
+    "what the hell",
+    "holy shit",
+    "u cooked",
+    "bruh moment",
+    "lmk when you're ready",
+    "omw"
+  ]) {
     assert.equal(isEnglish(message), true, message);
   }
 });
 
 test("rejects short Portuguese messages", () => {
-  for (const message of ["olá", "bom dia", "tá fixe", "obrigado"]) {
+  for (const message of ["olá", "bom dia", "tá fixe", "obrigado", "está tudo bem"]) {
     assert.equal(isEnglish(message), false, message);
   }
 });

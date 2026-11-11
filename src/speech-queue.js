@@ -17,6 +17,80 @@ const tts = new EdgeTTS({
   timeout: 20000
 });
 
+// Edge's unofficial TTS endpoint can temporarily rate-limit bursts of requests.
+// Keep one shared lane for all guilds, with a gap between each synthesis request.
+const MIN_REQUEST_INTERVAL_MS = 5000;
+const RETRY_DELAYS_MS = [20000, 60000];
+const FINAL_429_COOLDOWN_MS = 60000;
+
+let ttsLane = Promise.resolve();
+let nextRequestAt = 0;
+let blockedUntil = 0;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function isRateLimitError(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  return /(?:HTTP\s*)?429|Too Many Requests/i.test(message);
+}
+
+async function generateSpeech(text, filePath, isCurrent) {
+  // Serialise TTS requests across guilds; separate guild queues must not create a burst.
+  const previous = ttsLane;
+  let release;
+  ttsLane = new Promise((resolve) => {
+    release = resolve;
+  });
+
+  await previous;
+
+  try {
+    for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt += 1) {
+      if (!isCurrent()) return false;
+
+      const waitUntil = Math.max(nextRequestAt, blockedUntil);
+      const waitMs = Math.max(0, waitUntil - Date.now());
+
+      if (waitMs > 0) {
+        console.log("[GafiSpeak] TTS pacing: waiting " + Math.ceil(waitMs / 1000) + "s before the next request.");
+        await sleep(waitMs);
+      }
+
+      if (!isCurrent()) return false;
+
+      nextRequestAt = Date.now() + MIN_REQUEST_INTERVAL_MS;
+
+      try {
+        console.log("[GafiSpeak] Generating speech audio.");
+        await tts.ttsPromise(text, filePath);
+        return true;
+      } catch (error) {
+        if (!isRateLimitError(error)) throw error;
+
+        if (attempt >= RETRY_DELAYS_MS.length) {
+          blockedUntil = Date.now() + FINAL_429_COOLDOWN_MS;
+          console.error(
+            "[GafiSpeak] The TTS service is still rate-limiting requests (HTTP 429). " +
+            "This message could not be generated; the next request will wait at least 60s."
+          );
+          throw error;
+        }
+
+        const retryDelay = RETRY_DELAYS_MS[attempt];
+        blockedUntil = Date.now() + retryDelay;
+        console.warn(
+          "[GafiSpeak] TTS rate limit (HTTP 429). Retrying this message in " +
+          Math.ceil(retryDelay / 1000) + "s (" + (attempt + 1) + "/" + RETRY_DELAYS_MS.length + ")."
+        );
+      }
+    }
+
+    return false;
+  } finally {
+    release();
+  }
+}
+
 export class SpeechQueue {
   constructor(player, options = {}) {
     this.player = player;
@@ -66,12 +140,18 @@ export class SpeechQueue {
         const filePath = path.join(tmpdir(), "gafispeak-" + randomUUID() + ".mp3");
 
         try {
-          await tts.ttsPromise(text, filePath);
-          if (jobGeneration !== this.generation) continue;
+          const generated = await generateSpeech(
+            text,
+            filePath,
+            () => jobGeneration === this.generation
+          );
+
+          if (!generated || jobGeneration !== this.generation) continue;
 
           const resource = createAudioResource(filePath, { inlineVolume: true });
           resource.volume?.setVolume(this.volume);
           this.currentResource = resource;
+          console.log("[GafiSpeak] Playing generated speech.");
           await this.playResource(resource);
         } catch (error) {
           if (jobGeneration === this.generation) {

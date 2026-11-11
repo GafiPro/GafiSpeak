@@ -62,8 +62,6 @@ export class SpeechQueue {
         let filePath;
 
         try {
-          // Start the worker once; it loads Kokoro into VRAM and keeps it there.
-          await generateSpeech;
           if (jobGeneration !== this.generation) continue;
 
           // Collect nearby chat messages so one model call can speak them together.

@@ -99,16 +99,14 @@ def main():
         return 1
 
     for raw_line in sys.stdin:
+        request = None
         try:
             request = json.loads(raw_line)
             response = synthesize(pipeline, request)
             emit(response)
         except Exception as error:
             traceback.print_exc(file=sys.stderr)
-            try:
-                request_id = request.get("id") if isinstance(request, dict) else None
-            except UnboundLocalError:
-                request_id = None
+            request_id = request.get("id") if isinstance(request, dict) else None
             emit({
                 "type": "error",
                 "id": request_id,

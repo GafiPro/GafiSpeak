@@ -16,14 +16,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install dependencies
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Node dependencies
         run: npm install
       - name: Check JavaScript syntax
         run: |
           node --check src/index.js
           node --check src/speech-queue.js
+          node --check src/kokoro-worker-client.js
           node --check scripts/deploy-commands.js
-      - name: Audit dependencies
+      - name: Check Python syntax
+        run: python -m py_compile src/kokoro_worker.py
+      - name: Audit Node dependencies
         run: |
           npm audit --json > npm-audit.json || true
           node -e "const report = require('./npm-audit.json'); for (const [name, item] of Object.entries(report.vulnerabilities || {})) console.log(name + ': ' + item.severity + '; fixAvailable=' + JSON.stringify(item.fixAvailable))"

@@ -2,80 +2,17 @@ import { randomUUID } from "node:crypto";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { performance } from "node:perf_hooks";
 import ffmpegPath from "ffmpeg-static";
 import { AudioPlayerStatus, createAudioResource } from "@discordjs/voice";
-import { KokoroTTS } from "kokoro-js";
+import { generateSpeech } from "./kokoro-worker-client.js";
 
 if (ffmpegPath) {
   process.env.FFMPEG_PATH ??= ffmpegPath;
 }
 
-const MODEL_ID = "onnx-community/Kokoro-82M-v1.0-ONNX";
-const VOICE = "am_fenrir";
 const BATCH_WINDOW_MS = 350;
 const MAX_BATCH_MESSAGES = 8;
 const MAX_BATCH_CHARACTERS = 1200;
-
-// Load the open-weight model once and keep it in memory for all guild queues.
-// The first run downloads the model and voice assets; later runs use the local cache.
-let kokoroPromise = null;
-
-async function getKokoro() {
-  if (!kokoroPromise) {
-    console.log("[GafiSpeak] Loading the local Kokoro model. The first run downloads its files.");
-
-    kokoroPromise = KokoroTTS.from_pretrained(MODEL_ID, {
-      dtype: "q8",
-      device: "cpu"
-    }).then((tts) => {
-      console.log("[GafiSpeak] Kokoro is ready (voice: " + VOICE + ").");
-      return tts;
-    }).catch((error) => {
-      kokoroPromise = null;
-      throw error;
-    });
-  }
-
-  return kokoroPromise;
-}
-
-// Run only one local inference at a time so separate guild queues do not
-// overload the same CPU/model instance. This is serialization, not a cooldown.
-let generationLane = Promise.resolve();
-
-async function generateSpeech(text, filePath, isCurrent) {
-  const previous = generationLane;
-  let release;
-  generationLane = new Promise((resolve) => {
-    release = resolve;
-  });
-
-  await previous;
-
-  try {
-    if (!isCurrent()) return false;
-
-    const tts = await getKokoro();
-    if (!isCurrent()) return false;
-
-    console.log("[GafiSpeak] Generating speech with Kokoro.");
-    const startedAt = performance.now();
-    const audio = await tts.generate(text, {
-      voice: VOICE,
-      speed: 1
-    });
-    const generationSeconds = (performance.now() - startedAt) / 1000;
-
-    if (!isCurrent()) return false;
-
-    await audio.save(filePath);
-    console.log("[GafiSpeak] Kokoro generated audio in " + generationSeconds.toFixed(2) + "s.");
-    return true;
-  } finally {
-    release();
-  }
-}
 
 export class SpeechQueue {
   constructor(player, options = {}) {
@@ -125,11 +62,11 @@ export class SpeechQueue {
         let filePath;
 
         try {
-          // Load first, then collect messages that arrived while the model was warming up.
-          await getKokoro();
+          // Start the worker once; it loads Kokoro into VRAM and keeps it there.
+          await generateSpeech;
           if (jobGeneration !== this.generation) continue;
 
-          // A short collection window merges rapid-fire chat messages into fewer model calls.
+          // Collect nearby chat messages so one model call can speak them together.
           await new Promise((resolve) => setTimeout(resolve, BATCH_WINDOW_MS));
           if (jobGeneration !== this.generation) continue;
 

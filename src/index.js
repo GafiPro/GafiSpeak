@@ -14,6 +14,7 @@ import {
 } from "@discordjs/voice";
 import { config } from "./config.js";
 import { SpeechQueue } from "./speech-queue.js";
+import { shutdownKokoroWorker } from "./kokoro-worker-client.js";
 import { toSpeechText } from "./text.js";
 
 const client = new Client({
@@ -215,6 +216,7 @@ client.on(Events.Error, (error) => {
 async function shutdown(signal) {
   console.log("[GafiSpeak] Received " + signal + "; shutting down.");
   for (const guildId of sessions.keys()) closeSession(guildId);
+  shutdownKokoroWorker();
   client.destroy();
 }
 

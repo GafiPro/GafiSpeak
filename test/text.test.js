@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { isEnglish, toSpeechText } from "../src/text.js";
 
 test("accepts common short English chat messages", () => {
-  for (const message of ["hi", "gg", "lmao", "what's up", "lets play", "brb"]) {
+  for (const message of ["hi", "gg", "lmao", "what's up", "lets play", "brb", "I'm ready", "don't worry"]) {
     assert.equal(isEnglish(message), true, message);
   }
 });

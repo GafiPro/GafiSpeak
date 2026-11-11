@@ -9,12 +9,12 @@ const SHORT_ENGLISH_WORDS = new Set(
     "is it its ive just keep kind know later let lets like little lmao lol look love made make " +
     "man many may me mine more most much my nah need never new next nice no not now of off " +
     "oh okay ok old on one only or other our out over people pls please play playing pretty " +
-    "probably rn really right rofl same say see she should sick so some someone something sorry " +
-    "still stop sure sup take talk tell than thanks that the their them then there these they " +
+    "probably rn really ready right rofl same say see she should sick so some someone something sorry " +
+    "still stop sure sup take talk tell test testing than thanks that the their them then there these they " +
     "thing think this tho those though time to today together too try ty u uh um up us use very " +
-    "wait wanna want was way we well were what what's whats when where which who why will with work would " +
+    "wait wanna want was way we well were what whats when where which who why will with work worry would " +
     "wow wtf yeah ye yes you your yours yw afk brb gl hf idc imho imo lmk np nt omw tbh thx wp " +
-    "ez ggwp lmfao hahaha ahaha hahah huhh"
+    "ez ggwp lmfao hahaha ahaha hahah huhh discord voice chat server"
   ).split(/\s+/)
 );
 
@@ -48,7 +48,7 @@ export function isEnglish(input) {
   if (tokens.length === 0) return false;
 
   if (letterCount < 20) {
-    return tokens.every((token) => SHORT_ENGLISH_WORDS.has(token));
+    return tokens.every((token) => SHORT_ENGLISH_WORDS.has(token.replaceAll("'", "")));
   }
 
   return franc(normalized, { minLength: 10 }) === "eng";

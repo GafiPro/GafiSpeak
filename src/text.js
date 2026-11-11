@@ -12,7 +12,7 @@ const SHORT_ENGLISH_WORDS = new Set(
     "probably rn really ready right rofl same say see she should sick so some someone something sorry " +
     "still stop sure sup take talk tell test testing than thanks that the their them then there these they " +
     "thing think this tho those though time to today together too try ty u uh um up us use very " +
-    "wait wanna want was way we well were what whats when where which who why will with work worry would " +
+    "wait wanna want was way we well were what whats thats crazy shot sec problem sucks when where which who why will with work worry would " +
     "wow wtf yeah ye yes you your yours yw afk brb gl hf idc imho imo lmk np nt omw tbh thx wp " +
     "ez ggwp lmfao hahaha ahaha hahah huhh discord voice chat server"
   ).split(/\s+/)

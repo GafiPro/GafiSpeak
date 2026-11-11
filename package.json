@@ -13,7 +13,7 @@
     "test": "node --test"
   },
   "dependencies": {
-    "@discordjs/opus": "^0.4.0",
+    "@discordjs/opus": "^0.11.0",
     "@discordjs/voice": "^0.19.2",
     "discord.js": "^14.25.1",
     "dotenv": "^16.6.1",

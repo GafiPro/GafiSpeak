@@ -12,7 +12,7 @@ const SHORT_ENGLISH_WORDS = new Set(
     "probably rn really right rofl same say see she should sick so some someone something sorry " +
     "still stop sure sup take talk tell than thanks that the their them then there these they " +
     "thing think this tho those though time to today together too try ty u uh um up us use very " +
-    "wait wanna want was way we well were what when where which who why will with work would " +
+    "wait wanna want was way we well were what what's whats when where which who why will with work would " +
     "wow wtf yeah ye yes you your yours yw afk brb gl hf idc imho imo lmk np nt omw tbh thx wp " +
     "ez ggwp lmfao hahaha ahaha hahah huhh"
   ).split(/\s+/)

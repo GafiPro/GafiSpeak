@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { performance } from "node:perf_hooks";
 import ffmpegPath from "ffmpeg-static";
 import { AudioPlayerStatus, createAudioResource } from "@discordjs/voice";
 import { KokoroTTS } from "kokoro-js";
@@ -12,6 +13,9 @@ if (ffmpegPath) {
 
 const MODEL_ID = "onnx-community/Kokoro-82M-v1.0-ONNX";
 const VOICE = "am_fenrir";
+const BATCH_WINDOW_MS = 350;
+const MAX_BATCH_MESSAGES = 8;
+const MAX_BATCH_CHARACTERS = 1200;
 
 // Load the open-weight model once and keep it in memory for all guild queues.
 // The first run downloads the model and voice assets; later runs use the local cache.
@@ -56,14 +60,17 @@ async function generateSpeech(text, filePath, isCurrent) {
     if (!isCurrent()) return false;
 
     console.log("[GafiSpeak] Generating speech with Kokoro.");
+    const startedAt = performance.now();
     const audio = await tts.generate(text, {
       voice: VOICE,
       speed: 1
     });
+    const generationSeconds = (performance.now() - startedAt) / 1000;
 
     if (!isCurrent()) return false;
 
     await audio.save(filePath);
+    console.log("[GafiSpeak] Kokoro generated audio in " + generationSeconds.toFixed(2) + "s.");
     return true;
   } finally {
     release();
@@ -114,13 +121,40 @@ export class SpeechQueue {
 
     try {
       while (this.items.length > 0) {
-        const text = this.items.shift();
         const jobGeneration = this.generation;
-        const filePath = path.join(tmpdir(), "gafispeak-" + randomUUID() + ".wav");
+        let filePath;
 
         try {
+          // Load first, then collect messages that arrived while the model was warming up.
+          await getKokoro();
+          if (jobGeneration !== this.generation) continue;
+
+          // A short collection window merges rapid-fire chat messages into fewer model calls.
+          await new Promise((resolve) => setTimeout(resolve, BATCH_WINDOW_MS));
+          if (jobGeneration !== this.generation) continue;
+
+          const batch = [];
+          let batchCharacters = 0;
+
+          while (this.items.length > 0 && batch.length < MAX_BATCH_MESSAGES) {
+            const next = this.items[0];
+            if (batch.length > 0 && batchCharacters + next.length > MAX_BATCH_CHARACTERS) break;
+
+            batch.push(this.items.shift());
+            batchCharacters += next.length;
+          }
+
+          if (batch.length === 0) continue;
+
+          const spokenText = batch.join(". ");
+          filePath = path.join(tmpdir(), "gafispeak-" + randomUUID() + ".wav");
+
+          if (batch.length > 1) {
+            console.log("[GafiSpeak] Combining " + batch.length + " queued messages into one speech request.");
+          }
+
           const generated = await generateSpeech(
-            text,
+            spokenText,
             filePath,
             () => jobGeneration === this.generation
           );
@@ -138,7 +172,7 @@ export class SpeechQueue {
           }
         } finally {
           this.currentResource = null;
-          await rm(filePath, { force: true }).catch(() => {});
+          if (filePath) await rm(filePath, { force: true }).catch(() => {});
         }
       }
     } finally {

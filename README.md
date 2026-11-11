@@ -7,7 +7,7 @@ GafiSpeak is a Discord voice bot that reads all text messages written by its con
 - Reads messages written by one configured Discord user, across guild text channels the bot can access.
 - Uses the local Kokoro-82M text-to-speech model with one fixed American male voice (`am_fenrir`).
 - Runs speech generation locally on the bot's computer; no paid TTS API or provider request limits.
-- Queues messages and plays them in order, without interrupting the current message.
+- Queues messages and plays them in order, without interrupting the current message. Rapid messages are combined into a single synthesis request to reduce repeated model overhead.
 - Slash commands: `/join`, `/volume`, and `/leave`.
 - The queue is cleared when the bot leaves the voice channel.
 
@@ -65,7 +65,7 @@ The first start that generates speech downloads the Kokoro model and voice files
 - Messages from anyone except `OWNER_ID`, bot messages, webhooks, and direct messages are ignored.
 - No language filter is applied: Portuguese, English, slang, abbreviations, and short messages are all sent to the same English voice. Non-English pronunciation may not sound natural.
 - URLs and raw Discord mention IDs are removed from spoken text. Markdown and custom emoji markup are simplified.
-- A bounded queue prevents unlimited memory usage. If it is full, new messages are skipped and a warning is written to the bot console.
+- A bounded queue prevents unlimited memory usage. If it is full, new messages are skipped and a warning is written to the bot console. Messages arriving within a short window are combined (up to 8 messages / 1,200 characters) to reduce synthesis calls.
 - Kokoro generates audio locally. There are no hosted TTS request limits or per-character API charges, but the speed of generation depends on the computer. The current Node.js setup uses CPU inference.
 
 ## Development

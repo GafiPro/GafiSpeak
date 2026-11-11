@@ -1,5 +1,3 @@
-import { franc } from "franc-min";
-
 // English words and common gaming / internet chat slang. Short messages are
 // difficult for language detectors, so these are checked against this allowlist.
 const SHORT_ENGLISH_WORDS = new Set(
@@ -46,21 +44,4 @@ export function toSpeechText(input) {
     .replace(/\p{Extended_Pictographic}/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
-}
-
-export function isEnglish(input) {
-  if (typeof input !== "string") return false;
-
-  const normalized = input.toLowerCase().replace(/[’‘]/g, "'").trim();
-  const tokens = normalized.match(/\p{L}+(?:'\p{L}+)*/gu) ?? [];
-  const letterCount = (normalized.match(/\p{L}/gu) ?? []).length;
-
-  if (tokens.length === 0) return false;
-
-  // Language detection is unreliable for short chat messages and slang.
-  if (letterCount < 35) {
-    return tokens.every((token) => SHORT_ENGLISH_WORDS.has(token.replaceAll("'", "")));
-  }
-
-  return franc(normalized, { minLength: 10 }) === "eng";
 }

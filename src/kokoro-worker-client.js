@@ -151,7 +151,7 @@ async function getWorker() {
   return state;
 }
 
-export async function generateSpeech(text, outputPath, isCurrent = () => true) {
+export async function generateSpeech(text, outputPath, isCurrent = () => true, voice = "am_fenrir") {
   const state = await getWorker();
   if (!isCurrent()) return false;
 
@@ -163,7 +163,8 @@ export async function generateSpeech(text, outputPath, isCurrent = () => true) {
   const payload = JSON.stringify({
     id,
     text,
-    output_path: outputPath
+    output_path: outputPath,
+    voice
   });
 
   state.child.stdin.write(payload + "\n", (error) => {

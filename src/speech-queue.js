@@ -5,6 +5,7 @@ import path from "node:path";
 import ffmpegPath from "ffmpeg-static";
 import { AudioPlayerStatus, createAudioResource } from "@discordjs/voice";
 import { generateSpeech } from "./kokoro-worker-client.js";
+import { DEFAULT_VOICE_ID, isAvailableVoice } from "./voice-catalog.js";
 
 if (ffmpegPath) {
   process.env.FFMPEG_PATH ??= ffmpegPath;
@@ -19,6 +20,7 @@ export class SpeechQueue {
     this.player = player;
     this.maxQueueSize = options.maxQueueSize ?? 40;
     this.volume = 0.75;
+    this.voice = isAvailableVoice(options.voice) ? options.voice : DEFAULT_VOICE_ID;
     this.items = [];
     this.processing = false;
     this.generation = 0;
@@ -37,6 +39,11 @@ export class SpeechQueue {
     this.items.push(text.trim());
     void this.drain();
     return true;
+  }
+
+  setVoice(voiceId) {
+    if (!isAvailableVoice(voiceId)) throw new Error("That voice ID is not available in Kokoro.");
+    this.voice = voiceId;
   }
 
   setVolume(percent) {
@@ -91,7 +98,8 @@ export class SpeechQueue {
           const generated = await generateSpeech(
             spokenText,
             filePath,
-            () => jobGeneration === this.generation
+            () => jobGeneration === this.generation,
+            this.voice
           );
 
           if (!generated || jobGeneration !== this.generation) continue;

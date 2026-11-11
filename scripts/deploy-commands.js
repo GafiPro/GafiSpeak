@@ -17,6 +17,9 @@ const commands = [
         .setRequired(true)
     ),
   new SlashCommandBuilder()
+    .setName("voice")
+    .setDescription("Browse and choose any available Kokoro voice."),
+  new SlashCommandBuilder()
     .setName("leave")
     .setDescription("Leave the voice channel and clear the speech queue.")
 ].map((command) => command.toJSON());

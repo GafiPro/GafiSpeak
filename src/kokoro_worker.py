@@ -6,7 +6,7 @@ import traceback
 from contextlib import redirect_stdout
 
 OUTPUT = sys.__stdout__
-VOICE = "am_fenrir"
+DEFAULT_VOICE = "am_fenrir"
 SAMPLE_RATE = 24000
 
 
@@ -43,6 +43,9 @@ def synthesize(pipeline, request):
     text = request.get("text")
     output_path = request.get("output_path")
     request_id = request.get("id")
+    voice = request.get("voice", DEFAULT_VOICE)
+    if not isinstance(voice, str) or len(voice) > 40 or not voice.replace("_", "").isalnum():
+        raise ValueError("The selected voice ID is invalid.")
 
     if not isinstance(text, str) or not text.strip():
         raise ValueError("The speech text is empty.")
@@ -56,7 +59,7 @@ def synthesize(pipeline, request):
     with redirect_stdout(sys.stderr), torch.inference_mode():
         for _graphemes, _phonemes, audio in pipeline(
             text.strip(),
-            voice=VOICE,
+            voice=voice,
             speed=1,
             split_pattern=r"\n+"
         ):

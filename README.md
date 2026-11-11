@@ -9,8 +9,8 @@ GafiSpeak is a Discord voice bot that reads all text messages written by its con
 - Runs speech generation locally on the NVIDIA GPU through CUDA; no paid TTS API or provider request limits.
 - Keeps the Python model loaded in GPU memory between messages.
 - Queues messages and plays them in order. Rapid messages are combined into a single synthesis request.
-- Slash commands: `/join`, `/volume`, and `/leave`.
-- The queue is cleared when the bot leaves the voice channel.
+- Slash commands: `/join`, `/voice`, `/volume`, and `/leave`.
+- The queue is cleared when the bot leaves the voice channel. Voice preferences are saved in `data/voice-preferences.json`.
 
 ## Requirements
 
@@ -77,6 +77,7 @@ The first start loads and downloads the official PyTorch model and voice files. 
 | Command | Description |
 | --- | --- |
 | `/join` | Join the voice channel you are currently in. |
+| `/voice` | Open a paginated selector containing all 54 Kokoro voices. The choice is saved per server. |
 | `/volume percent:` | Set playback volume from 0 to 100. |
 | `/leave` | Leave the voice channel and clear pending speech. |
 
@@ -84,10 +85,10 @@ The first start loads and downloads the official PyTorch model and voice files. 
 
 - GafiSpeak only queues messages while it is connected to a voice channel.
 - Messages from anyone except `OWNER_ID`, bot messages, webhooks, and direct messages are ignored.
-- No language filter is applied: Portuguese, English, slang, abbreviations, and short messages are all sent to the same American English voice. Non-English pronunciation may not sound natural.
+- No language filter is applied: messages in any language are sent to the selected Kokoro voice. The text phonemizer remains configured for American English, so selecting a voice designed for another language changes the voice preset but does not automatically translate or switch text-language processing.
 - URLs and raw Discord mention IDs are removed from spoken text. Markdown and custom emoji markup are simplified.
 - A bounded queue prevents unlimited memory usage. If it is full, new messages are skipped and a warning is written to the bot console. Messages arriving within a short window are combined (up to 8 messages / 1,200 characters) to reduce repeated synthesis overhead.
-- Speech is synthesized locally by PyTorch and Kokoro on the configured NVIDIA GPU. There are no hosted TTS request limits or per-character API charges, but generation speed depends on the computer and available GPU memory.
+- Speech is synthesized locally by PyTorch and Kokoro on the configured NVIDIA GPU. There are no hosted TTS request limits or per-character API charges, but generation speed depends on the computer and available GPU memory. The `/voice` menu contains all 54 voice IDs published for Kokoro-82M and is split into pages to fit Discord selection-menu limits.
 
 ## Development
 

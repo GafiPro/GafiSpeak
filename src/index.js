@@ -2,6 +2,12 @@ import {
   ChannelType,
   Client,
   Events,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  EmbedBuilder,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
   GatewayIntentBits,
   MessageFlags,
   PermissionFlagsBits
@@ -15,6 +21,8 @@ import {
 import { config } from "./config.js";
 import { SpeechQueue } from "./speech-queue.js";
 import { shutdownKokoroWorker } from "./kokoro-worker-client.js";
+import { AVAILABLE_VOICES, DEFAULT_VOICE_ID, getVoiceById } from "./voice-catalog.js";
+import { getGuildVoicePreference, loadVoicePreferences, setGuildVoicePreference } from "./voice-preferences.js";
 import { toSpeechText } from "./text.js";
 
 const client = new Client({
@@ -27,6 +35,119 @@ const client = new Client({
 });
 
 const sessions = new Map();
+
+const VOICE_PAGE_SIZE = 20;
+const VOICE_PAGE_COUNT = Math.ceil(AVAILABLE_VOICES.length / VOICE_PAGE_SIZE);
+
+function buildVoicePanel(guildId, requestedPage = 0, notice = "") {
+  const page = Math.max(0, Math.min(VOICE_PAGE_COUNT - 1, requestedPage));
+  const selectedVoiceId = getGuildVoicePreference(guildId);
+  const pageVoices = AVAILABLE_VOICES.slice(page * VOICE_PAGE_SIZE, (page + 1) * VOICE_PAGE_SIZE);
+
+  const select = new StringSelectMenuBuilder()
+    .setCustomId("gafispeak:voice:select:" + page)
+    .setPlaceholder("Escolhe uma voz...")
+    .setMinValues(1)
+    .setMaxValues(1)
+    .addOptions(pageVoices.map((voice) =>
+      new StringSelectMenuOptionBuilder()
+        .setLabel(voice.id + " — " + voice.name)
+        .setValue(voice.id)
+        .setDescription(voice.language + " · " + voice.gender)
+        .setDefault(voice.id === selectedVoiceId)
+    ));
+
+  const selectRow = new ActionRowBuilder().addComponents(select);
+  const navigationRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId("gafispeak:voice:page:" + (page - 1))
+      .setLabel("Anterior")
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(page === 0),
+    new ButtonBuilder()
+      .setCustomId("gafispeak:voice:page:" + (page + 1))
+      .setLabel("Seguinte")
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(page === VOICE_PAGE_COUNT - 1)
+  );
+
+  const currentVoice = getVoiceById(selectedVoiceId) ?? getVoiceById(DEFAULT_VOICE_ID);
+  const description = [
+    notice,
+    "**Voz atual:** `" + currentVoice.id + "` — " + currentVoice.name,
+    "Escolhe uma voz no menu. Existem " + AVAILABLE_VOICES.length +
+      " vozes; usa os botões para percorrer as " + VOICE_PAGE_COUNT + " páginas.",
+    "A alteração aplica-se às próximas sínteses e fica guardada para este servidor.",
+    "Nota: a leitura do texto continua configurada para fonética de inglês americano."
+  ].filter(Boolean).join("\n\n");
+
+  const embed = new EmbedBuilder()
+    .setColor(0x5865F2)
+    .setTitle("GafiSpeak · Seleção de voz")
+    .setDescription(description)
+    .addFields({
+      name: "Página " + (page + 1) + "/" + VOICE_PAGE_COUNT,
+      value: pageVoices.map((voice) => "`" + voice.id + "` — " + voice.name).join("\n")
+    })
+    .setFooter({ text: "As vozes estão agrupadas por idioma e género." });
+
+  return { embeds: [embed], components: [selectRow, navigationRow] };
+}
+
+async function handleVoiceComponent(interaction) {
+  const isVoiceSelect = interaction.isStringSelectMenu() &&
+    interaction.customId.startsWith("gafispeak:voice:select:");
+  const isVoicePage = interaction.isButton() &&
+    interaction.customId.startsWith("gafispeak:voice:page:");
+  if (!isVoiceSelect && !isVoicePage) return false;
+
+  if (interaction.user.id !== config.ownerId) {
+    await interaction.reply({ content: "These controls are restricted to the bot owner.", flags: MessageFlags.Ephemeral });
+    return true;
+  }
+  if (!interaction.inGuild()) {
+    await interaction.reply({ content: "Use this control in a server.", flags: MessageFlags.Ephemeral });
+    return true;
+  }
+
+  try {
+    if (isVoicePage) {
+      const page = Number(interaction.customId.split(":").at(-1));
+      if (!Number.isInteger(page) || page < 0 || page >= VOICE_PAGE_COUNT) {
+        await interaction.reply({ content: "That voice page is not valid.", flags: MessageFlags.Ephemeral });
+        return true;
+      }
+      await interaction.update(buildVoicePanel(interaction.guildId, page));
+      return true;
+    }
+
+    const page = Number(interaction.customId.split(":").at(-1));
+    const voice = getVoiceById(interaction.values[0]);
+    if (!voice || !Number.isInteger(page) || page < 0 || page >= VOICE_PAGE_COUNT) {
+      await interaction.reply({ content: "That voice selection is not valid.", flags: MessageFlags.Ephemeral });
+      return true;
+    }
+
+    await setGuildVoicePreference(interaction.guildId, voice.id);
+    const session = sessions.get(interaction.guildId);
+    session?.queue.setVoice(voice.id);
+    const notice = session
+      ? "Voz alterada. As próximas mensagens usarão esta voz."
+      : "Voz guardada. Será usada quando entrares numa call com `/join`.";
+    await interaction.update(buildVoicePanel(interaction.guildId, page, notice));
+    return true;
+  } catch (error) {
+    console.error("[GafiSpeak] Voice selection failed:", error);
+    const content = "Não foi possível guardar esta voz. Consulta a consola do bot.";
+    if (interaction.replied || interaction.deferred) {
+      await interaction.followUp({ content, flags: MessageFlags.Ephemeral }).catch(() => {});
+    } else {
+      await interaction.reply({ content, flags: MessageFlags.Ephemeral }).catch(() => {});
+    }
+    return true;
+  }
+}
+
 
 function closeSession(guildId) {
   const session = sessions.get(guildId);
@@ -84,7 +205,7 @@ async function handleJoin(interaction) {
     });
 
     const player = createAudioPlayer();
-    const queue = new SpeechQueue(player, { maxQueueSize: config.maxQueueSize });
+    const queue = new SpeechQueue(player, { maxQueueSize: config.maxQueueSize, voice: getGuildVoicePreference(interaction.guildId) });
     const session = {
       channelId: channel.id,
       connection,
@@ -127,6 +248,7 @@ client.once(Events.ClientReady, (readyClient) => {
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
+  if (await handleVoiceComponent(interaction)) return;
   if (!interaction.isChatInputCommand()) return;
 
   if (interaction.user.id !== config.ownerId) {
@@ -162,6 +284,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
       await interaction.reply({
         content: "Volume set to " + percent + "%.",
+        flags: MessageFlags.Ephemeral
+      });
+      return;
+    }
+
+    if (interaction.commandName === "voice") {
+      await interaction.reply({
+        ...buildVoicePanel(interaction.guildId),
         flags: MessageFlags.Ephemeral
       });
       return;
@@ -227,6 +357,8 @@ process.once("SIGINT", () => {
 process.once("SIGTERM", () => {
   void shutdown("SIGTERM");
 });
+
+await loadVoicePreferences();
 
 client.login(config.token).catch((error) => {
   console.error("[GafiSpeak] Login failed:", error);

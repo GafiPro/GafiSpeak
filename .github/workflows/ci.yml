@@ -27,6 +27,8 @@ jobs:
           node --check src/index.js
           node --check src/speech-queue.js
           node --check src/kokoro-worker-client.js
+          node --check src/voice-catalog.js
+          node --check src/voice-preferences.js
           node --check scripts/deploy-commands.js
       - name: Check Python syntax
         run: python -m py_compile src/kokoro_worker.py

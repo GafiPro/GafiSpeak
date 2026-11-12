@@ -11,6 +11,13 @@ let stopPromise = null;
 let stopRequested = false;
 let projectRoot = null;
 let isQuitting = false;
+let rpcClient = null;
+let rpcReady = false;
+let rpcConnecting = false;
+let rpcRetryTimer = null;
+let presenceUpdateTimer = null;
+let botStartedAt = null;
+let botOnline = false;
 
 app.setAppUserModelId("com.gafipro.gafispeak.manager");
 
@@ -24,6 +31,10 @@ function addLog(level, message) {
     message: safeMessage
   };
   logs.push(entry);
+  if (safeMessage.includes("[GafiSpeak] Logged in as ")) {
+    botOnline = true;
+    queueRichPresenceUpdate();
+  }
   if (logs.length > MAX_LOG_ENTRIES) logs.splice(0, logs.length - MAX_LOG_ENTRIES);
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("manager:log", entry);
 }
@@ -80,8 +91,165 @@ function getStatus() {
     stopping: stopRequested,
     rootFound: Boolean(projectRoot),
     rootPath: projectRoot,
-    ready: getProjectChecks().length === 0
+    ready: getProjectChecks().length === 0,
+    presenceStatus: rpcReady ? "connected" : (rpcConnecting || rpcRetryTimer ? "connecting" : "offline")
   };
+}
+
+function readDiscordClientId() {
+  if (!projectRoot) return null;
+  try {
+    const envText = fs.readFileSync(path.join(projectRoot, ".env"), "utf8");
+    const match = envText.match(/^\s*(?:export\s+)?CLIENT_ID\s*=\s*["']?(\d{17,20})["']?(?:\s*#.*)?\s*$/m);
+    return match ? match[1] : null;
+  } catch {
+    return null;
+  }
+}
+
+function scheduleRichPresenceReconnect(delay = 15000) {
+  if (isQuitting || rpcRetryTimer) return;
+  rpcRetryTimer = setTimeout(() => {
+    rpcRetryTimer = null;
+    void connectRichPresence();
+    broadcastStatus();
+  }, delay);
+  rpcRetryTimer.unref?.();
+  broadcastStatus();
+}
+
+function buildRichPresenceActivity() {
+  const running = Boolean(botProcess && botProcess.exitCode === null);
+  const state = !running
+    ? "Manager aberto · pronto a iniciar"
+    : stopRequested
+      ? "A desligar o bot..."
+      : botOnline
+        ? "Online · Kokoro TTS"
+        : "A ligar ao Discord...";
+
+  const activity = {
+    name: "GafiSpeak",
+    details: running ? "A dar voz às mensagens" : "A gerir o GafiSpeak",
+    state,
+    buttons: [
+      { label: "GitHub", url: "https://github.com/GafiPro/GafiSpeak" },
+      { label: "Kokoro TTS", url: "https://huggingface.co/hexgrad/Kokoro-82M" }
+    ]
+  };
+
+  if (running && botStartedAt) activity.startTimestamp = new Date(botStartedAt);
+  return activity;
+}
+
+function queueRichPresenceUpdate() {
+  if (!rpcReady || presenceUpdateTimer) return;
+  presenceUpdateTimer = setTimeout(() => {
+    presenceUpdateTimer = null;
+    void updateRichPresence();
+  }, 700);
+  presenceUpdateTimer.unref?.();
+}
+
+async function updateRichPresence() {
+  if (!rpcReady || !rpcClient?.user) return;
+  try {
+    await rpcClient.user.setActivity(buildRichPresenceActivity());
+  } catch (error) {
+    const failedClient = rpcClient;
+    rpcClient = null;
+    rpcReady = false;
+    addLog("AVISO", "A Rich Presence deixou de atualizar: " + (error?.message || String(error)));
+    await failedClient?.destroy().catch(() => {});
+    scheduleRichPresenceReconnect();
+    broadcastStatus();
+  }
+}
+
+async function connectRichPresence() {
+  if (rpcConnecting || rpcReady || isQuitting || !projectRoot) return;
+  const clientId = readDiscordClientId();
+  if (!clientId) {
+    addLog("AVISO", "Rich Presence indisponível: não encontrei um CLIENT_ID válido no .env.");
+    broadcastStatus();
+    return;
+  }
+
+  rpcConnecting = true;
+  broadcastStatus();
+  let client = null;
+
+  try {
+    const { Client } = await import("@xhayper/discord-rpc");
+    if (isQuitting) return;
+
+    client = new Client({ clientId });
+    rpcClient = client;
+
+    client.on("ready", () => {
+      if (rpcClient !== client) return;
+      rpcReady = true;
+      addLog("INFO", "Discord Rich Presence ligada.");
+      queueRichPresenceUpdate();
+      broadcastStatus();
+    });
+
+    client.on("disconnected", () => {
+      if (rpcClient !== client) return;
+      rpcClient = null;
+      rpcReady = false;
+      if (!isQuitting) {
+        addLog("AVISO", "A ligação Rich Presence foi interrompida. Vou tentar novamente em 15 segundos.");
+        scheduleRichPresenceReconnect();
+      }
+      broadcastStatus();
+    });
+
+    client.on("ERROR", (data) => {
+      const message = data?.message || "O Discord devolveu um erro RPC.";
+      addLog("AVISO", "Discord RPC: " + message);
+    });
+
+    await client.login();
+    if (rpcClient === client && client.isConnected && !rpcReady) {
+      rpcReady = true;
+      addLog("INFO", "Discord Rich Presence ligada.");
+      queueRichPresenceUpdate();
+    }
+  } catch (error) {
+    if (rpcClient === client) rpcClient = null;
+    rpcReady = false;
+    await client?.destroy().catch(() => {});
+    if (!isQuitting) {
+      addLog("AVISO", "Discord não detetado para a Rich Presence: " + (error?.message || String(error)));
+      scheduleRichPresenceReconnect();
+    }
+  } finally {
+    rpcConnecting = false;
+    broadcastStatus();
+  }
+}
+
+async function stopRichPresence() {
+  if (rpcRetryTimer) {
+    clearTimeout(rpcRetryTimer);
+    rpcRetryTimer = null;
+  }
+  if (presenceUpdateTimer) {
+    clearTimeout(presenceUpdateTimer);
+    presenceUpdateTimer = null;
+  }
+
+  const client = rpcClient;
+  rpcClient = null;
+  rpcReady = false;
+  rpcConnecting = false;
+  broadcastStatus();
+
+  if (client) {
+    try { await client.user?.clearActivity(); } catch {}
+    try { await client.destroy(); } catch {}
+  }
 }
 
 function broadcastStatus() {
@@ -126,24 +294,34 @@ function startBot() {
     });
     botProcess = child;
     stopRequested = false;
+    botOnline = false;
+    botStartedAt = null;
     attachLogStream(child.stdout, "BOT");
     attachLogStream(child.stderr, "AVISO");
 
     child.once("spawn", () => {
+      botStartedAt = Date.now();
       addLog("INFO", "Processo iniciado. O bot está a ligar-se ao Discord.");
+      queueRichPresenceUpdate();
       broadcastStatus();
     });
     child.once("error", (error) => {
       addLog("ERRO", "Não foi possível iniciar o Node.js: " + error.message);
       if (botProcess === child) botProcess = null;
+      botStartedAt = null;
+      botOnline = false;
       stopRequested = false;
+      queueRichPresenceUpdate();
       broadcastStatus();
     });
     child.once("exit", (code, signal) => {
       if (botProcess === child) botProcess = null;
+      botStartedAt = null;
+      botOnline = false;
       if (stopRequested || code === 0) addLog("INFO", "GafiSpeak parado.");
       else addLog("ERRO", "O processo terminou (código " + code + ", sinal " + signal + ").");
       stopRequested = false;
+      queueRichPresenceUpdate();
       broadcastStatus();
     });
     broadcastStatus();
@@ -184,6 +362,7 @@ function stopBot() {
 
   stopRequested = true;
   addLog("INFO", "A pedir ao bot para encerrar de forma segura...");
+  queueRichPresenceUpdate();
   broadcastStatus();
 
   stopPromise = new Promise((resolve) => {
@@ -279,17 +458,23 @@ if (!gotLock) {
       addLog("AVISO", "Coloca GafiSpeak Manager.exe na pasta principal do GafiSpeak, ao lado de .env e package.json.");
     }
     createWindow();
+    void connectRichPresence();
   });
 }
 
 app.on("before-quit", (event) => {
   if (isQuitting) return;
-  if (botProcess && botProcess.exitCode === null) {
-    event.preventDefault();
-    isQuitting = true;
-    addLog("INFO", "A fechar a aplicação e a parar o bot...");
-    void stopBot().finally(() => app.quit());
-  }
+  const botIsRunning = Boolean(botProcess && botProcess.exitCode === null);
+  const hasPresenceWork = Boolean(rpcClient || rpcRetryTimer || rpcConnecting);
+  if (!botIsRunning && !hasPresenceWork) return;
+
+  event.preventDefault();
+  isQuitting = true;
+  addLog("INFO", "A fechar a aplicação e a limpar a Rich Presence...");
+  void stopBot().finally(async () => {
+    await stopRichPresence();
+    app.quit();
+  });
 });
 
 app.on("window-all-closed", () => {

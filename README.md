@@ -23,6 +23,8 @@ A portable Windows app is available to control the bot without opening PowerShel
 
 The manager uses the existing Node.js dependencies, .env file, and .venv folder. It does not reinstall or modify the Python environment. Keep the project folder in place while the manager is running. Closing the manager also stops the bot.
 
+The manager also publishes a Discord Rich Presence using the existing CLIENT_ID from .env. Keep the Discord desktop client open and signed in: the activity appears on your personal Discord profile, not on the bot account. It shows whether GafiSpeak is starting, online, or stopped, includes the running time, and provides GitHub and Kokoro links. The manager never uses or sends your bot token for Rich Presence. If Discord is closed, the app retries automatically.
+
 ## Requirements
 
 - Node.js 22.12.0 or newer.

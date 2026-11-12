@@ -10,6 +10,8 @@ const statusValue = document.getElementById("status-value");
 const statusSubtitle = document.getElementById("status-subtitle");
 const statusIndicator = document.getElementById("status-indicator");
 const folderPath = document.getElementById("folder-path");
+const rpcTag = document.getElementById("rpc-tag");
+const rpcStatus = document.getElementById("rpc-status");
 const toast = document.getElementById("toast");
 
 let entries = [];
@@ -81,6 +83,14 @@ function renderStatus(nextStatus) {
   }
   folderPath.textContent = status.rootPath || "Pasta do GafiSpeak não encontrada";
   folderPath.title = status.rootPath || "";
+
+  const presenceStatus = status.presenceStatus || "offline";
+  rpcTag.className = "rpc-tag" + (presenceStatus === "connected" ? " connected" : presenceStatus === "connecting" ? " connecting" : "");
+  rpcStatus.textContent = presenceStatus === "connected"
+    ? "Rich Presence ativa"
+    : presenceStatus === "connecting"
+      ? "A ligar ao Discord..."
+      : "Discord não detetado";
 }
 
 function renderInitialState(data) {

@@ -15,12 +15,29 @@
   "build": {
     "appId": "com.gafipro.gafispeak.manager",
     "productName": "GafiSpeak Manager",
-    "directories": { "output": "dist" },
-    "files": ["main.cjs", "preload.cjs", "renderer/**/*", "package.json"],
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "renderer/**/*",
+      "package.json"
+    ],
     "asar": true,
     "win": {
-      "target": [{ "target": "portable", "arch": ["x64"] }],
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "artifactName": "GafiSpeak-Manager-1.0.0-Portable.exe"
     }
+  },
+  "dependencies": {
+    "@xhayper/discord-rpc": "1.5.1"
   }
 }

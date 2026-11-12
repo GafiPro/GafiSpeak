@@ -10,6 +10,7 @@ on:
       - "scripts/**"
       - "package.json"
       - "requirements-tts.txt"
+      - "README.md"
       - ".github/workflows/windows-installer.yml"
   workflow_dispatch:
 
@@ -22,6 +23,21 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
+      - name: Validate PowerShell bootstrap syntax
+        shell: powershell
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Join-Path $PWD "installer\bootstrap.ps1"),
+            [ref]$tokens,
+            [ref]$parseErrors
+          ) | Out-Null
+          if ($parseErrors.Count -gt 0) {
+            $parseErrors | Format-List *
+            throw "The installer PowerShell script contains syntax errors."
+          }
 
       - name: Set up Python for runtime compatibility test
         uses: actions/setup-python@v5

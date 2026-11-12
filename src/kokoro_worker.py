@@ -19,18 +19,15 @@ def load_pipeline():
     import torch
     from kokoro import KPipeline
 
-    if not torch.cuda.is_available():
-        raise RuntimeError(
-            "PyTorch cannot access CUDA. Confirm that the CUDA-enabled PyTorch build "
-            "is installed in the GafiSpeak .venv."
-        )
-
-    device_name = torch.cuda.get_device_name(0)
-    cuda_version = torch.version.cuda
+    # Prefer NVIDIA CUDA when available; otherwise run Kokoro on the CPU.
+    use_cuda = torch.cuda.is_available()
+    device = "cuda" if use_cuda else "cpu"
+    device_name = torch.cuda.get_device_name(0) if use_cuda else "CPU"
+    cuda_version = torch.version.cuda if use_cuda else None
 
     # Keep library startup messages away from stdout: stdout is the JSON protocol.
     with redirect_stdout(sys.stderr):
-        pipeline = KPipeline(lang_code="a", device="cuda")
+        pipeline = KPipeline(lang_code="a", device=device)
 
     return pipeline, device_name, cuda_version
 
@@ -86,7 +83,7 @@ def synthesize(pipeline, request):
 
 def main():
     try:
-        # Import and initialize once. The model stays resident in VRAM between messages.
+        # Import and initialize once. The model stays resident in GPU memory or RAM.
         import numpy  # noqa: F401
         import soundfile  # noqa: F401
 

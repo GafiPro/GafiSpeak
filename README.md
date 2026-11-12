@@ -12,6 +12,20 @@ GafiSpeak is a Discord voice bot that reads all text messages written by its con
 - Slash commands: `/join`, `/voice`, `/volume`, and `/leave`.
 - The queue is cleared when the bot leaves the voice channel. Voice preferences are saved in `data/voice-preferences.json`.
 
+## Full Windows installer
+
+The project also provides a single Windows x64 setup executable: `GafiSpeak-Setup-1.0.0.exe`. Download it from the **Full Windows Installer** workflow artifact in [GitHub Actions](https://github.com/GafiPro/GafiSpeak/actions/workflows/windows-installer.yml).
+
+The installer prepares the complete application for the current Windows user:
+
+- Installs private copies of Node.js and Python inside the GafiSpeak folder. It does not change the system PATH and does not require administrator permissions.
+- Creates the Python virtual environment and installs PyTorch, Kokoro, the speech dependencies, and the Node.js bot dependencies.
+- Detects NVIDIA graphics hardware and attempts to install the CUDA 12.8 PyTorch build. Systems without NVIDIA use the CPU build. If the CUDA package cannot be installed, setup falls back to CPU PyTorch.
+- Installs the GafiSpeak Manager and creates Start menu shortcuts.
+- Creates `.env` from `.env.example` only when no configuration exists, then opens it in Notepad. Fill in `DISCORD_TOKEN`, `CLIENT_ID`, and `OWNER_ID` before starting the bot.
+
+An internet connection is required during setup. PyTorch and its dependencies can take a while to download, especially on NVIDIA systems. The Kokoro model weights and voice assets are downloaded the first time the bot generates speech. The installer preserves an existing `.env` and saved voice preferences when reinstalling.
+
 ## Windows desktop manager
 
 A portable Windows app is available to control the bot without opening PowerShell.

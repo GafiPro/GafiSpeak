@@ -407,6 +407,7 @@ function createWindow() {
     minWidth: 780,
     minHeight: 560,
     title: "GafiSpeak Manager",
+    icon: path.join(__dirname, "build", "icon.ico"),
     backgroundColor: "#0b1020",
     autoHideMenuBar: true,
     webPreferences: {

@@ -22,7 +22,8 @@
       "main.cjs",
       "preload.cjs",
       "renderer/**/*",
-      "package.json"
+      "package.json",
+      "build/icon.ico"
     ],
     "asar": true,
     "win": {
@@ -34,7 +35,8 @@
           ]
         }
       ],
-      "artifactName": "GafiSpeak-Manager-1.0.0-Portable.exe"
+      "artifactName": "GafiSpeak-Manager-1.0.0-Portable.exe",
+      "icon": "build/icon.ico"
     }
   },
   "dependencies": {

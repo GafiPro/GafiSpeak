@@ -121,16 +121,16 @@ function scheduleRichPresenceReconnect(delay = 15000) {
 function buildRichPresenceActivity() {
   const running = Boolean(botProcess && botProcess.exitCode === null);
   const state = !running
-    ? "Manager aberto · pronto a iniciar"
+    ? "Manager open · ready to start"
     : stopRequested
-      ? "A desligar o bot..."
+      ? "Stopping the bot..."
       : botOnline
         ? "Online · Kokoro TTS"
-        : "A ligar ao Discord...";
+        : "Connecting to Discord...";
 
   const activity = {
     name: "GafiSpeak",
-    details: running ? "A dar voz às mensagens" : "A gerir o GafiSpeak",
+    details: running ? "Giving messages a voice" : "Managing GafiSpeak",
     state,
     buttons: [
       { label: "GitHub", url: "https://github.com/GafiPro/GafiSpeak" },

@@ -26,7 +26,7 @@ jobs:
       - name: Set up Python for runtime compatibility test
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13.17"
+          python-version: "3.12.10"
 
       - name: Test CPU PyTorch and Kokoro dependencies
         shell: powershell

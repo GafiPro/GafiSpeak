@@ -30,6 +30,9 @@ jobs:
           node --check src/voice-catalog.js
           node --check src/voice-preferences.js
           node --check scripts/deploy-commands.js
+          node --check desktop/main.cjs
+          node --check desktop/preload.cjs
+          node --check desktop/renderer/renderer.js
       - name: Check Python syntax
         run: python -m py_compile src/kokoro_worker.py
       - name: Audit Node dependencies

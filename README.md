@@ -5,12 +5,23 @@ GafiSpeak is a Discord voice bot that reads all text messages written by its con
 ## Features
 
 - Reads messages written by one configured Discord user, across guild text channels the bot can access.
-- Uses the official Kokoro-82M PyTorch model with one fixed American male voice (`am_fenrir`).
+- Uses the official Kokoro-82M PyTorch model with a selectable catalogue of 54 voices (default: `am_fenrir`).
 - Runs speech generation locally on the NVIDIA GPU through CUDA; no paid TTS API or provider request limits.
 - Keeps the Python model loaded in GPU memory between messages.
 - Queues messages and plays them in order. Rapid messages are combined into a single synthesis request.
 - Slash commands: `/join`, `/voice`, `/volume`, and `/leave`.
 - The queue is cleared when the bot leaves the voice channel. Voice preferences are saved in `data/voice-preferences.json`.
+
+## Windows desktop manager
+
+A portable Windows app is available to control the bot without opening PowerShell.
+
+1. Download the GafiSpeak Manager portable executable from the latest successful **Windows Manager** workflow run in the GitHub Actions tab.
+2. Put GafiSpeak-Manager-1.0.0-Portable.exe in the main GafiSpeak project folder, next to .env and package.json.
+3. Double-click the executable. Press **Iniciar** to start the bot and **Parar** to stop it.
+4. The live log shows bot and Kokoro output. **Copiar log** copies the session history for troubleshooting.
+
+The manager uses the existing Node.js dependencies, .env file, and .venv folder. It does not reinstall or modify the Python environment. Keep the project folder in place while the manager is running. Closing the manager also stops the bot.
 
 ## Requirements
 

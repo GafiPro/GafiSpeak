@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:;">
+  <title>GafiSpeak Manager</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v18M7.5 7v10M16.5 7v10M3.5 10v4M20.5 10v4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></div>
+        <div><div class="brand-title">GafiSpeak <span>Manager</span></div><div class="brand-caption">DISCORD VOICE · LOCAL KOKORO TTS</div></div>
+      </div>
+      <div class="version-tag"><span class="version-dot"></span> WINDOWS DESKTOP</div>
+    </header>
+    <section class="intro">
+      <div class="intro-copy">
+        <p class="eyebrow">CONTROLO DO BOT</p>
+        <h1>O teu bot, <span>sob controlo.</span></h1>
+        <p class="intro-text">Inicia ou pára o GafiSpeak e acompanha tudo o que acontece, sem abrir uma consola.</p>
+      </div>
+      <div class="status-card">
+        <div class="status-top"><span class="status-label">ESTADO</span><span class="status-indicator" id="status-indicator"></span></div>
+        <div class="status-value" id="status-value">A preparar...</div>
+        <div class="status-subtitle" id="status-subtitle">A verificar a pasta do projeto</div>
+      </div>
+    </section>
+    <section class="control-panel">
+      <div class="control-copy">
+        <div class="section-kicker">CONTROLOS</div>
+        <div class="control-title">Gestão do processo</div>
+        <div class="control-subtitle">O motor do bot corre em segundo plano enquanto esta app estiver aberta.</div>
+      </div>
+      <div class="button-row">
+        <button id="start-button" class="button button-primary" type="button"><span class="button-symbol">▶</span> Iniciar</button>
+        <button id="stop-button" class="button button-stop" type="button" disabled><span class="button-symbol">■</span> Parar</button>
+      </div>
+    </section>
+    <section class="log-panel">
+      <div class="log-header">
+        <div><div class="section-kicker">MONITORIZAÇÃO</div><div class="log-title">Log em tempo real</div><div class="log-subtitle">Mensagens do bot, Kokoro e erros de execução.</div></div>
+        <div class="log-actions">
+          <span class="log-count" id="log-count">0 linhas</span>
+          <button id="clear-button" class="button button-quiet" type="button">Limpar</button>
+          <button id="copy-button" class="button button-copy" type="button"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg> Copiar log</button>
+        </div>
+      </div>
+      <div class="terminal" id="terminal" role="log" aria-live="polite" aria-label="Log do GafiSpeak"><div class="terminal-empty" id="terminal-empty">O registo aparecerá aqui quando iniciares o bot.</div></div>
+    </section>
+    <footer class="footer">
+      <div class="folder-info"><span class="folder-icon">⌁</span><span id="folder-path">A procurar a pasta do GafiSpeak...</span></div>
+      <div class="footer-note"><span class="footer-dot"></span> Fechar esta app também pára o bot.</div>
+    </footer>
+    <div class="toast" id="toast" role="status"></div>
+  </main>
+  <script src="./renderer.js"></script>
+</body>
+</html>

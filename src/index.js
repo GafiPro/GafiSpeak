@@ -343,7 +343,11 @@ client.on(Events.Error, (error) => {
   console.error("[GafiSpeak] Discord client error:", error);
 });
 
+let shutdownInProgress = false;
+
 async function shutdown(signal) {
+  if (shutdownInProgress) return;
+  shutdownInProgress = true;
   console.log("[GafiSpeak] Received " + signal + "; shutting down.");
   for (const guildId of sessions.keys()) closeSession(guildId);
   shutdownKokoroWorker();
@@ -357,6 +361,22 @@ process.once("SIGINT", () => {
 process.once("SIGTERM", () => {
   void shutdown("SIGTERM");
 });
+
+// The Windows desktop manager sends this private stdin message for a clean shutdown.
+if (!process.stdin.isTTY) {
+  let managerInput = "";
+  process.stdin.setEncoding("utf8");
+  process.stdin.on("data", (chunk) => {
+    managerInput += chunk;
+    const lines = managerInput.split(/\r?\n/);
+    managerInput = lines.pop() || "";
+    for (const line of lines) {
+      if (line.trim() === "GAFISPEAK_MANAGER_STOP") {
+        void shutdown("DESKTOP_MANAGER").finally(() => process.exit(0));
+      }
+    }
+  });
+}
 
 await loadVoicePreferences();
 

@@ -1,0 +1,26 @@
+{
+  "name": "gafispeak-manager",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Windows desktop manager for the GafiSpeak Discord bot.",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win portable --x64"
+  },
+  "devDependencies": {
+    "electron": "45.3.0",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "com.gafipro.gafispeak.manager",
+    "productName": "GafiSpeak Manager",
+    "directories": { "output": "dist" },
+    "files": ["main.cjs", "preload.cjs", "renderer/**/*", "package.json"],
+    "asar": true,
+    "win": {
+      "target": [{ "target": "portable", "arch": ["x64"] }],
+      "artifactName": "GafiSpeak-Manager-\${version}-Portable.\${ext}"
+    }
+  }
+}

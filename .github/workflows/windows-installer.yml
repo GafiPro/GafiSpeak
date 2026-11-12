@@ -1,0 +1,72 @@
+name: Full Windows Installer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "installer/**"
+      - "desktop/**"
+      - "src/**"
+      - "scripts/**"
+      - "package.json"
+      - "requirements-tts.txt"
+      - ".github/workflows/windows-installer.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build the GafiSpeak Manager
+        working-directory: desktop
+        run: |
+          npm install --no-audit --no-fund
+          npm run build:win
+
+      - name: Install Inno Setup
+        run: choco install innosetup --yes --no-progress
+
+      - name: Build the complete GafiSpeak installer
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          $programFilesX86 = [Environment]::GetEnvironmentVariable("ProgramFiles(x86)")
+          $compiler = Join-Path $programFilesX86 "Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $compiler)) {
+            throw "Inno Setup compiler was not found."
+          }
+          & $compiler "installer\gafispeak.iss"
+          if ($LASTEXITCODE -ne 0) {
+            throw "Inno Setup failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Create installer checksum
+        shell: powershell
+        run: |
+          $installer = "release\GafiSpeak-Setup-1.0.0.exe"
+          if (-not (Test-Path $installer)) {
+            throw "The installer executable was not created."
+          }
+          (Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant() |
+            Set-Content "release\GafiSpeak-Setup-1.0.0.exe.sha256"
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: GafiSpeak-Full-Windows-Installer
+          path: |
+            release/GafiSpeak-Setup-1.0.0.exe
+            release/GafiSpeak-Setup-1.0.0.exe.sha256
+          if-no-files-found: error
+          retention-days: 30

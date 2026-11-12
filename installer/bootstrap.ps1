@@ -4,12 +4,12 @@ $ProgressPreference = "SilentlyContinue"
 
 $AppRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
 $RuntimeRoot = Join-Path $AppRoot ".runtime"
-$PythonHome = Join-Path $RuntimeRoot "python313"
+$PythonHome = Join-Path $RuntimeRoot "python312"
 $NodeHome = Join-Path $RuntimeRoot "node"
 $VenvPython = Join-Path $AppRoot ".venv\Scripts\python.exe"
 $LogPath = Join-Path $AppRoot "install.log"
 $NodeVersion = "22.23.5"
-$PythonVersion = "3.13.17"
+$PythonVersion = "3.12.10"
 $TempRoot = Join-Path $env:TEMP "GafiSpeak-Setup"
 
 function Write-Step {
@@ -111,10 +111,9 @@ try {
         $pythonUrl = "https://www.python.org/ftp/python/$PythonVersion/python-$PythonVersion-amd64.exe"
         Invoke-WebRequest -Uri $pythonUrl -OutFile $pythonInstaller -UseBasicParsing
 
-        $expectedPythonHash = "5da012101ba2e17113a9a1cd901e9ce1441086f2b7ecb5de06ec94163899a190"
-        $actualPythonHash = Get-Sha256 -Path $pythonInstaller
-        if ($actualPythonHash -ne $expectedPythonHash) {
-            throw "O checksum do instalador Python não corresponde ao checksum publicado pelo Python.org."
+        $pythonSignature = Get-AuthenticodeSignature -FilePath $pythonInstaller
+        if ($pythonSignature.Status -ne "Valid" -or $pythonSignature.SignerCertificate.Subject -notmatch "Python Software Foundation") {
+            throw "A assinatura digital do instalador Python não é válida ou não pertence à Python Software Foundation."
         }
 
         Write-Step "A instalar Python $PythonVersion na pasta do GafiSpeak"
@@ -131,6 +130,13 @@ try {
     }
 
     Write-Step "A criar o ambiente Python do GafiSpeak"
+    if (Test-Path -LiteralPath $VenvPython) {
+        $existingPythonVersion = (& $VenvPython -c "import sys; print(str(sys.version_info.major) + '.' + str(sys.version_info.minor))").Trim()
+        if ($existingPythonVersion -ne "3.12") {
+            Write-Host "O ambiente Python anterior usa $existingPythonVersion; vou recriá-lo com Python 3.12."
+            Remove-Item -LiteralPath (Join-Path $AppRoot ".venv") -Recurse -Force
+        }
+    }
     if (-not (Test-Path -LiteralPath $VenvPython)) {
         Invoke-Checked -FilePath $pythonExe -Arguments @("-m", "venv", (Join-Path $AppRoot ".venv"))
     }

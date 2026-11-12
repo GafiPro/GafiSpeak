@@ -64,6 +64,7 @@ function findProjectRoot() {
 
 function getNodeExecutable() {
   const candidates = [
+    projectRoot ? path.join(projectRoot, ".runtime", "node", "node.exe") : null,
     process.env.GAFISPEAK_NODE,
     process.env.NODE_HOME ? path.join(process.env.NODE_HOME, "node.exe") : null,
     process.env.ProgramFiles ? path.join(process.env.ProgramFiles, "nodejs", "node.exe") : null,

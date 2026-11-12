@@ -20,7 +20,7 @@
     "asar": true,
     "win": {
       "target": [{ "target": "portable", "arch": ["x64"] }],
-      "artifactName": "GafiSpeak-Manager-\${version}-Portable.\${ext}"
+      "artifactName": "GafiSpeak-Manager-1.0.0-Portable.exe"
     }
   }
 }

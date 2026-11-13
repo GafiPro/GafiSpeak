@@ -225,7 +225,7 @@ function createActivity(source) {
     details: cleanText(source.details),
     state: cleanText(source.state)
   };
-  const types = { PLAYING: 0, STREAMING: 1, LISTENING: 2, WATCHING: 3, COMPETING: 5 };
+  const types = { PLAYING: 0, LISTENING: 2, WATCHING: 3, COMPETING: 5 };
   if (Object.prototype.hasOwnProperty.call(types, source.type)) activity.type = types[source.type];
 
   if (source.largeImageKey) activity.largeImageKey = cleanText(source.largeImageKey, 256);

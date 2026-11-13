@@ -11,6 +11,7 @@ let rpcStatus = { connected: false, connecting: false, clientIdPresent: false };
 let imageData = { large: null, small: null };
 let toastTimer = null;
 const appStartedAt = Date.now();
+let timerStartedAt = Date.now();
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 
@@ -89,10 +90,10 @@ function renderPreview() {
   $("#small-thumb").innerHTML = '<img src="' + previewImage(activity.smallImagePath, "small") + '" alt="">';
   const timer = $("#preview-timer");
   if (activity.timerMode === "elapsed") {
-    timer.textContent = formatDuration(Number(activity.elapsedSeconds || 0) + (Date.now() - appStartedAt) / 1000) + " decorrido";
+    timer.textContent = formatDuration(Number(activity.elapsedSeconds || 0) + (Date.now() - timerStartedAt) / 1000) + " decorrido";
     timer.style.display = "block";
   } else if (activity.timerMode === "countdown") {
-    timer.textContent = formatDuration(Math.max(0, Number(activity.countdownMinutes || 60) * 60 - (Date.now() - appStartedAt) / 1000)) + " restante";
+    timer.textContent = formatDuration(Math.max(0, Number(activity.countdownMinutes || 60) * 60 - (Date.now() - timerStartedAt) / 1000)) + " restante";
     timer.style.display = "block";
   } else {
     timer.style.display = "none";
@@ -171,8 +172,11 @@ function renderPresets() {
     const load = document.createElement("button");
     load.className = "button button-secondary";
     load.textContent = "Carregar";
-    load.addEventListener("click", () => {
+    load.addEventListener("click", async () => {
       settings.activity = { ...settings.activity, ...deepClone(preset.activity), buttons: deepClone(preset.activity.buttons || settings.activity.buttons) };
+      timerStartedAt = Date.now();
+      imageData.large = await api.loadImage(settings.activity.largeImagePath);
+      imageData.small = await api.loadImage(settings.activity.smallImagePath);
       setFieldValues(); renderPreview(); showPage("editor"); notify("Preset carregado no editor.");
     });
     actions.appendChild(load);
@@ -290,6 +294,8 @@ function initEvents() {
   }));
   $("#apply-button").addEventListener("click", async () => {
     await persistSettings();
+    timerStartedAt = Date.now();
+    renderPreview();
     const result = await api.apply(currentActivity());
     notify(result.message);
   });
@@ -330,7 +336,7 @@ function initEvents() {
     const result = await api.importConfig();
     if (result.canceled) return;
     if (!result.ok) { notify(result.message); return; }
-    settings = result.state.settings; imageData = result.state.imageData; rpcStatus = result.state.status;
+    settings = result.state.settings; imageData = result.state.imageData; rpcStatus = result.state.status; timerStartedAt = Date.now();
     setFieldValues(); renderPreview(); renderStatus(); renderPresets();
     notify("Configuração importada.");
   });

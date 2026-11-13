@@ -311,11 +311,11 @@ function initEvents() {
   $("#save-preset-button").addEventListener("click", savePreset);
   $("#save-preset-page").addEventListener("click", savePreset);
   $("#save-settings-button").addEventListener("click", async () => {
-    const result = await persistSettings();
-    if (settings.autoConnect && settings.clientId) {
+    await persistSettings();
+    if (settings.clientId) {
       const connection = await api.connect();
       notify(connection.message);
-    } else notify("Definições guardadas.");
+    } else notify("Definições guardadas. Adiciona o Application ID para ligar.");
   });
   $("#disconnect-button").addEventListener("click", async () => {
     const result = await api.disconnect();

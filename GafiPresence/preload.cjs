@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld("gafiPresence", {
   apply: (activity) => ipcRenderer.invoke("presence:apply", activity),
   clear: () => ipcRenderer.invoke("presence:clear"),
   pickImage: (kind) => ipcRenderer.invoke("presence:pick-image", kind),
+  loadImage: (imagePath) => ipcRenderer.invoke("presence:load-image", imagePath),
   savePreset: (preset) => ipcRenderer.invoke("presence:save-preset", preset),
   deletePreset: (id) => ipcRenderer.invoke("presence:delete-preset", id),
   exportConfig: () => ipcRenderer.invoke("presence:export"),

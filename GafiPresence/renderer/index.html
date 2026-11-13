@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: file:; style-src 'self' 'unsafe-inline'; script-src 'self';">
+  <title>GafiPresence</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <img src="../assets/gafipresence-logo.svg" alt="GafiPresence" class="brand-logo">
+        <div><div class="brand-name">Gafi<span>Presence</span></div><div class="brand-caption">CUSTOM ACTIVITY MANAGER</div></div>
+      </div>
+
+      <div class="sidebar-label">WORKSPACE</div>
+      <nav class="nav">
+        <button class="nav-item active" data-tab="editor"><span class="nav-icon">✳</span><span>Editor</span></button>
+        <button class="nav-item" data-tab="presets"><span class="nav-icon">▤</span><span>Presets</span></button>
+        <button class="nav-item" data-tab="assets"><span class="nav-icon">▧</span><span>Assets</span></button>
+        <button class="nav-item" data-tab="settings"><span class="nav-icon">⚙</span><span>Definições</span></button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="connection-card">
+          <div class="connection-head"><span class="connection-dot" id="side-dot"></span><span id="side-connection">Desligado</span></div>
+          <div class="connection-note" id="side-note">Configura o Discord para começar.</div>
+          <button class="side-connect" id="side-connect">Ligar ao Discord</button>
+        </div>
+        <div class="sidebar-footer"><span class="mini-logo">G</span><span>Gafi Tools</span><span class="version">v0.1.0</span></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div><div class="crumb">GAFI TOOLS <span>/</span> <b id="crumb-current">EDITOR</b></div><div class="page-heading" id="page-heading">Editor de presença</div></div>
+        <div class="topbar-actions">
+          <div class="status-pill" id="status-pill"><span class="connection-dot"></span><span id="status-label">A aguardar configuração</span></div>
+          <button class="icon-button" id="export-button" title="Exportar configurações" aria-label="Exportar configurações">⇩</button>
+        </div>
+      </header>
+
+      <section class="page active" id="page-editor">
+        <div class="intro-row">
+          <div><div class="eyebrow">DISCORD RICH PRESENCE</div><h1>Faz com que apareça <span>à tua maneira.</span></h1><p class="intro-copy">Cria uma presença personalizada, acompanha a pré-visualização e aplica-a ao teu perfil Discord.</p></div>
+          <div class="quick-actions"><button class="button button-quiet" id="clear-button">Limpar presença</button><button class="button button-primary" id="apply-button"><span class="button-play">▶</span> Aplicar presença</button></div>
+        </div>
+
+        <div class="editor-layout">
+          <div class="editor-column">
+            <section class="panel">
+              <div class="panel-heading"><div><div class="section-kicker">01 / ATIVIDADE</div><h2>Informação principal</h2></div><span class="panel-mark">A1</span></div>
+              <div class="field-grid">
+                <label class="field full"><span>Nome da aplicação <small>O nome apresentado no Discord é controlado pela tua aplicação Discord.</small></span><input data-field="activity.name" maxlength="128" placeholder="GafiPresence"></label>
+                <label class="field"><span>Tipo de atividade</span><select data-field="activity.type"><option value="PLAYING">A jogar</option><option value="LISTENING">A ouvir</option><option value="WATCHING">A ver</option><option value="COMPETING">A competir</option><option value="STREAMING">Em transmissão</option></select></label>
+                <label class="field"><span>Detalhes <small>Linha principal · até 128 caracteres</small></span><input data-field="activity.details" maxlength="128" placeholder="A jogar Rocket League"></label>
+                <label class="field full"><span>Estado <small>Linha secundária · até 128 caracteres</small></span><input data-field="activity.state" maxlength="128" placeholder="Ranked 2v2 · Champion II"></label>
+              </div>
+              <div class="token-hint"><span class="sparkle">✦</span><span>Variáveis disponíveis: <code>{time}</code> hora atual · <code>{date}</code> data · <code>{uptime}</code> tempo desde que abriste a app.</span></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading"><div><div class="section-kicker">02 / IMAGENS</div><h2>Artwork e tooltips</h2></div><button class="text-button" data-open-tab="assets">Abrir galeria ↗</button></div>
+              <div class="image-edit-row">
+                <div class="image-thumb" id="large-thumb"><span>L</span></div>
+                <div class="image-fields">
+                  <label class="field"><span>Large Image Key <small>Chave do asset ou URL suportado</small></span><input data-field="activity.largeImageKey" maxlength="256" placeholder="ex.: gafi_nebula"></label>
+                  <label class="field"><span>Tooltip da imagem principal</span><input data-field="activity.largeImageText" maxlength="128" placeholder="A jogar no espaço"></label>
+                  <div class="inline-actions"><button class="mini-button" data-pick="large">Upload do computador</button><button class="mini-button" data-open-tab="assets">Escolher padrão</button></div>
+                </div>
+              </div>
+              <div class="sub-divider"></div>
+              <div class="image-edit-row">
+                <div class="image-thumb small-thumb" id="small-thumb"><span>S</span></div>
+                <div class="image-fields">
+                  <label class="field"><span>Small Image Key <small>Chave do asset ou URL suportado</small></span><input data-field="activity.smallImageKey" maxlength="256" placeholder="ex.: gafi_orbit"></label>
+                  <label class="field"><span>Tooltip da imagem pequena</span><input data-field="activity.smallImageText" maxlength="128" placeholder="Estado online"></label>
+                  <div class="inline-actions"><button class="mini-button" data-pick="small">Upload do computador</button><button class="mini-button" data-open-tab="assets">Escolher padrão</button></div>
+                </div>
+              </div>
+              <p class="helper-note">Os uploads locais servem para a pré-visualização. Para aparecerem na presença real, publica-os em Rich Presence → Art Assets no Developer Portal e usa a chave do asset.</p>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading"><div><div class="section-kicker">03 / TEMPO E LINKS</div><h2>Detalhes adicionais</h2></div><span class="panel-mark">A3</span></div>
+              <div class="field">
+                <span>Temporizador</span>
+                <div class="segmented" id="timer-segment">
+                  <button data-timer="none">Nenhum</button><button class="selected" data-timer="elapsed">Decorrido</button><button data-timer="countdown">Contagem decrescente</button>
+                </div>
+              </div>
+              <div class="field-grid timer-extra" id="timer-extra">
+                <label class="field"><span>Tempo decorrido (segundos)</span><input type="number" min="0" max="86400" data-field="activity.elapsedSeconds" value="0"></label>
+                <label class="field" id="countdown-field"><span>Tempo restante (minutos)</span><input type="number" min="1" max="10080" data-field="activity.countdownMinutes" value="60"></label>
+              </div>
+              <div class="sub-divider"></div>
+              <div class="buttons-heading"><div><div class="section-kicker">BOTÕES DE PERFIL</div><div class="small-copy">Até dois links clicáveis na tua presença.</div></div><span class="limit-pill">0 / 2</span></div>
+              <div class="field-grid button-fields">
+                <label class="field"><span>Botão 1 · Texto</span><input data-field="activity.buttons.0.label" maxlength="32" placeholder="O meu GitHub"></label>
+                <label class="field"><span>Botão 1 · URL</span><input data-field="activity.buttons.0.url" maxlength="512" placeholder="https://github.com/..."></label>
+                <label class="field"><span>Botão 2 · Texto</span><input data-field="activity.buttons.1.label" maxlength="32" placeholder="O meu servidor"></label>
+                <label class="field"><span>Botão 2 · URL</span><input data-field="activity.buttons.1.url" maxlength="512" placeholder="https://discord.gg/..."></label>
+              </div>
+            </section>
+          </div>
+
+          <aside class="preview-column">
+            <div class="preview-sticky">
+              <div class="preview-title"><div><div class="section-kicker">LIVE PREVIEW</div><h2>Pré-visualização</h2></div><span class="live-tag"><i></i> AO VIVO</span></div>
+              <div class="discord-card">
+                <div class="discord-cover"></div>
+                <div class="discord-avatar-wrap"><img src="../assets/gafipresence-logo.svg" class="discord-avatar" alt=""><span class="discord-online"></span></div>
+                <div class="discord-user"><div class="discord-username">Gabriel <span class="discord-discriminator">#0000</span></div><div class="discord-custom-status">Personalizar estado do perfil</div></div>
+                <div class="discord-divider"></div>
+                <div class="discord-section-title">A JOGAR UMA ATIVIDADE</div>
+                <div class="activity-preview">
+                  <div class="preview-art"><img id="preview-large" src="../assets/presets/large/nebula.svg" alt="Large image"><img id="preview-small" class="preview-small" src="../assets/presets/small/orbit.svg" alt="Small image"></div>
+                  <div class="preview-content"><div class="preview-app" id="preview-name">GafiPresence</div><div class="preview-line" id="preview-details">Customising my Discord presence</div><div class="preview-line" id="preview-state">GafiPresence</div><div class="preview-timer" id="preview-timer">00:00:00 decorrido</div></div>
+                </div>
+                <div class="preview-buttons" id="preview-buttons"></div>
+                <div class="discord-footnote">Pré-visualização ilustrativa · o Discord pode apresentar pequenas diferenças.</div>
+              </div>
+              <div class="preview-tip"><span>✦</span><div><b>Dica rápida</b><p>Guarda o teu trabalho como preset para alternares entre diferentes estilos em segundos.</p></div></div>
+              <button class="button button-secondary full-button" id="save-preset-button">＋ Guardar como preset</button>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="page" id="page-presets">
+        <div class="page-intro"><div class="eyebrow">A TUA BIBLIOTECA</div><h1>Os teus <span>presets.</span></h1><p class="intro-copy">Guarda diferentes personalidades e aplica-as quando quiseres.</p><div class="page-actions"><button class="button button-quiet" id="import-button">Importar JSON</button><button class="button button-primary" id="save-preset-page">＋ Guardar configuração atual</button></div></div>
+        <div class="preset-grid" id="preset-grid"></div>
+        <div class="empty-state" id="preset-empty"><div class="empty-symbol">▤</div><b>Ainda não guardaste presets</b><p>Cria um preset a partir do editor para o veres aqui.</p></div>
+      </section>
+
+      <section class="page" id="page-assets">
+        <div class="page-intro"><div class="eyebrow">BIBLIOTECA VISUAL</div><h1>Assets <span>à tua medida.</span></h1><p class="intro-copy">Escolhe uma imagem de exemplo ou faz upload de ficheiros do teu computador.</p></div>
+        <div class="asset-notice"><span>ⓘ</span><div><b>Imagem local e imagem Discord são coisas diferentes.</b><p>O ficheiro local aparece na pré-visualização. Para aparecer no perfil Discord, publica-o na página Art Assets da tua aplicação e coloca a respetiva key no Editor.</p></div></div>
+        <div class="asset-section"><div class="asset-section-head"><div><h2>Large Image</h2><p>Artwork principal · recomenda-se 1024 × 1024</p></div><button class="button button-quiet" data-pick="large">Upload Large Image</button></div><div class="asset-grid" id="large-gallery"></div></div>
+        <div class="asset-section"><div class="asset-section-head"><div><h2>Small Image</h2><p>Ícone sobreposto · recomenda-se 512 × 512</p></div><button class="button button-quiet" data-pick="small">Upload Small Image</button></div><div class="asset-grid small-gallery" id="small-gallery"></div></div>
+        <div class="asset-uploaded" id="uploaded-assets"></div>
+        <div class="asset-footer"><button class="button button-primary" id="open-portal-button">Abrir Discord Developer Portal ↗</button><span>As imagens de exemplo são artwork original incluído no GafiPresence.</span></div>
+      </section>
+
+      <section class="page" id="page-settings">
+        <div class="page-intro"><div class="eyebrow">PREFERÊNCIAS DA APLICAÇÃO</div><h1>Definições <span>gerais.</span></h1><p class="intro-copy">Liga a tua aplicação Discord e ajusta o aspeto do GafiPresence.</p></div>
+        <div class="settings-layout">
+          <section class="panel settings-panel"><div class="panel-heading"><div><div class="section-kicker">DISCORD RPC</div><h2>Ligação à aplicação</h2></div><span class="panel-mark">01</span></div>
+            <label class="field"><span>Discord Application ID <small>Não é o token de um bot. É o ID público da tua aplicação.</small></span><input data-field="clientId" maxlength="20" inputmode="numeric" placeholder="123456789012345678"></label>
+            <label class="toggle-row"><span><b>Ligar automaticamente</b><small>Tentar ligar ao Discord quando abres o GafiPresence.</small></span><input type="checkbox" id="auto-connect"></label>
+            <div class="settings-actions"><button class="button button-primary" id="save-settings-button">Guardar e ligar</button><button class="button button-quiet" id="disconnect-button">Desligar</button><button class="text-button" id="portal-link">Abrir Developer Portal ↗</button></div>
+          </section>
+          <section class="panel settings-panel"><div class="panel-heading"><div><div class="section-kicker">APARÊNCIA</div><h2>Personalizar interface</h2></div><span class="panel-mark">02</span></div>
+            <label class="field"><span>Cor de destaque</span><div class="color-row"><input type="color" id="accent-color" value="#8175f5"><span id="accent-value">#8175F5</span></div></label>
+            <p class="helper-note">A cor é aplicada aos botões, destaques e elementos selecionados.</p>
+          </section>
+          <section class="panel settings-panel"><div class="panel-heading"><div><div class="section-kicker">SOBRE</div><h2>GafiPresence v0.1.0</h2></div><span class="panel-mark">03</span></div><p class="settings-description">Um editor independente de Discord Rich Presence, desenvolvido pela GafiPro. Não precisa de bot token, não lê mensagens e não envia os teus uploads para um servidor externo.</p><div class="about-links"><a href="https://github.com/GafiPro/GafiSpeak/tree/feat/gafipresence-initial/GafiPresence" target="_blank" rel="noreferrer">Código-fonte no GitHub ↗</a><a href="https://discord.com/developers/docs/rich-presence/how-to" target="_blank" rel="noreferrer">Documentação Rich Presence ↗</a></div></section>
+        </div>
+      </section>
+
+      <footer class="main-footer"><span>GafiPresence <b>·</b> Custom Activity Manager</span><span>Feito para personalizares o teu Discord.</span></footer>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="./app.js"></script>
+</body>
+</html>

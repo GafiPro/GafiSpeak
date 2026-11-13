@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs><radialGradient id="a" cx="68%" cy="26%" r="85%"><stop stop-color="#a18cff"/><stop offset=".35" stop-color="#5349ad"/><stop offset="1" stop-color="#10172d"/></radialGradient><radialGradient id="b"><stop stop-color="#68d7ee" stop-opacity=".78"/><stop offset="1" stop-color="#68d7ee" stop-opacity="0"/></radialGradient></defs>
+  <rect width="1024" height="1024" fill="url(#a)"/><circle cx="760" cy="270" r="310" fill="url(#b)"/>
+  <g fill="none" stroke="#d9d4ff" stroke-opacity=".24"><ellipse cx="510" cy="510" rx="430" ry="190" transform="rotate(-33 510 510)" stroke-width="24"/><ellipse cx="510" cy="510" rx="340" ry="135" transform="rotate(42 510 510)" stroke-width="9"/><ellipse cx="510" cy="510" rx="470" ry="320" transform="rotate(12 510 510)" stroke-width="3"/></g>
+  <g fill="#fff"><circle cx="160" cy="200" r="5"/><circle cx="847" cy="142" r="4"/><circle cx="885" cy="710" r="7"/><circle cx="280" cy="820" r="4"/><circle cx="623" cy="90" r="3"/><circle cx="110" cy="590" r="3"/></g>
+  <circle cx="512" cy="510" r="112" fill="#d5cfff" fill-opacity=".12" stroke="#fff" stroke-opacity=".35" stroke-width="2"/>
+</svg>

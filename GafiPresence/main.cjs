@@ -332,6 +332,8 @@ ipcMain.handle("presence:pick-image", async (_event, kind) => {
   return { canceled: false, path: target, dataUrl: imageData(target), name: path.basename(source) };
 });
 
+ipcMain.handle("presence:load-image", (_event, imagePath) => imageData(imagePath));
+
 ipcMain.handle("presence:save-preset", (_event, preset) => {
   const name = cleanText(preset && preset.name, 48);
   if (!name) return { ok: false, message: "Escolhe um nome para o preset." };

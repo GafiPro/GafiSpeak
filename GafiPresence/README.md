@@ -49,7 +49,7 @@ The portable executable is written to \`dist/\`.
 
 ### Important: local uploads vs Discord assets
 
-An image uploaded from your computer is stored locally by GafiPresence and is immediately available in the editor preview and asset gallery. The local file path itself cannot be sent as a Discord image key. For it to appear in the real Discord profile, upload the image to your Discord application's Rich Presence Art Assets and enter its asset key in GafiPresence. A supported external image URL can also be entered as the image key.
+An image uploaded from your computer is stored locally by GafiPresence and is immediately available in the editor preview and asset gallery. The local file path itself cannot be sent as a Discord image key. Use the **Transferir Large PNG** or **Transferir Small PNG** buttons on the Assets page to export the selected artwork, upload that PNG to your Discord application's Rich Presence Art Assets and enter its asset key in GafiPresence. A supported external image URL can also be entered as the image key.
 
 The app keeps the local preview path and the Discord asset key as separate values so the preview never implies an image was published when it was not.
 

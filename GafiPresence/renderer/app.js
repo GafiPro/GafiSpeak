@@ -226,6 +226,24 @@ function renderGallery(hostSelector, assets, kind) {
     host.appendChild(button);
   });
 }
+function downloadAssetPng(kind) {
+  const image = new Image();
+  image.onload = () => {
+    const size = kind === "large" ? 1024 : 512;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const context = canvas.getContext("2d");
+    context.drawImage(image, 0, 0, size, size);
+    const link = document.createElement("a");
+    link.href = canvas.toDataURL("image/png");
+    link.download = "gafipresence-" + kind + ".png";
+    link.click();
+    notify((kind === "large" ? "Large" : "Small") + " Image exportada em PNG.");
+  };
+  image.onerror = () => notify("Não foi possível exportar esta imagem.");
+  image.src = previewImage(settings.activity[kind + "ImagePath"], kind);
+}
 function renderAssets() {
   renderGallery("#large-gallery", largeAssets, "large");
   renderGallery("#small-gallery", smallAssets, "small");
@@ -340,6 +358,8 @@ function initEvents() {
     setFieldValues(); renderPreview(); renderStatus(); renderPresets();
     notify("Configuração importada.");
   });
+  $("#download-large-png").addEventListener("click", () => downloadAssetPng("large"));
+  $("#download-small-png").addEventListener("click", () => downloadAssetPng("small"));
   $("#open-portal-button").addEventListener("click", () => api.openDeveloperPortal());
   $("#portal-link").addEventListener("click", () => api.openDeveloperPortal());
 }

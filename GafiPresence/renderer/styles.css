@@ -172,6 +172,7 @@ h2 { margin: 5px 0 0; font-size: 14px; font-weight: 760; letter-spacing: -.25px;
 .asset-uploaded { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 18px; }
 .uploaded-chip { display: flex; align-items: center; gap: 7px; padding: 6px 9px; border: 1px solid var(--line); border-radius: 7px; background: rgba(19,29,49,.8); color: #9da8c2; font-size: 8px; }
 .uploaded-chip img { width: 20px; height: 20px; border-radius: 4px; object-fit: cover; }
+.asset-downloads { display: flex; gap: 8px; }
 .asset-footer { display: flex; align-items: center; gap: 14px; padding-top: 14px; border-top: 1px solid var(--line); color: #76829e; font-size: 8px; }
 .settings-layout { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 13px; }
 .settings-panel { min-width: 0; }
